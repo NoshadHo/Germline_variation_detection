@@ -5,6 +5,7 @@ library(rlist)
 library(gplots)
 library(cluster)    # clustering algorithms
 library(factoextra) # clustering algorithms & visualization
+library(mclust)
 
 set.seed(1024)
 
@@ -47,9 +48,11 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
 
 
 #cluster the data using kmeans for 2 clusters
+  time_length = 0
   significant_tiles = data.frame(0,0.0)
+  significant_tiles = sig_tiles_total
   counter = 1
-  for (i in 156804:dim(tile_case)[2]){
+  for (i in 1:dim(tile_case)[2]){
     ptm = Sys.time()
     try({k = kmeans(tile_case[,i],centers = 2, nstart = 100)})
     tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$cluster)
@@ -60,23 +63,27 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
       significant_tiles[counter,] = c(i,stat_test$p.value)
       counter = counter+1
     }
-    if (i == 1){
-      time_length = Sys.time() - ptm  
-    }
     
-    print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length * (dim(tile_case)[2] - i)/60,sep = ""))
+    time_length = 0.3*(time_length) + 0.7*((Sys.time() - ptm) * (dim(tile_case)[2] - i)/60)
+    
+    print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length,sep = ""))
   }
+  #add column names
   colnames(significant_tiles) = c('tile', 'pvalue')
+  #only keep the rows that has been filled up
+  significant_tiles = significant_tiles %>% slice(1:counter)
+  #sig_tiles_total = significant_tiles
   
-  sig_tiles_total = rbind(significant_tiles,significant_tiles2)
-  
+  #tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
   #look at the pvalues histogram
-  sig_tiles_total %>% ggplot(aes(x = log10(pvalue)))+
+  significant_tiles %>% ggplot(aes(x = log10(pvalue)))+
     geom_density() + 
-    xlim(-11,0)
+    xlim(-13,0)
 
   #look at the position of tiles with lowest pvalue
-  selected_tiles = sig_tiles_total %>% filter(sig_tiles_total$pvalue < 1e-6) %>% arrange(pvalue)
+  #selected_tiles = significant_tiles %>% filter(significant_tiles$pvalue < 1e-8) %>% arrange(pvalue)
+  #look at the position of tiles in the top 1% (in terms of lowest p-value)
+  selected_tiles = significant_tiles %>% arrange(pvalue) %>% slice(1:round(dim(significant_tiles)[1]*.01))
   #top selected distribution on genome
   selected_tiles %>% ggplot(aes(x = tile))+
     geom_density() + 
@@ -86,14 +93,81 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   tile_ranges = as.data.frame(ranges(file$tile))
   tile_ranges %>% filter(start < 30420200 & end > 30420200)
 
+  
+  
+#start working on the bimodal idea
+###########################
+  #look at the distribution of tiles (the already finded to be significant)
+  tile1 = as.data.frame(tile_case[,172])
+  colnames(tile1) = "coverage"
+  #for trimodal: tile 111968
+  #for bimodal: tile 276
+  #for unimodal: tile 1663
+  tile1.gmm = Mclust(tile1)
+  summary(tile1.gmm)
+  tile1 = tile1 %>% mutate(cluster = tile1.gmm$classification)
+  tile1$cluster = as.factor(tile1$cluster)
+  tile1 %>% ggplot(aes(x = `coverage`, y = cluster))+geom_point()  #look at the position of points in clusters
+  tile1 %>% ggplot(aes(x = coverage))+geom_density(alpha = 0.4)+theme_minimal()
+  tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal()
+  #here we have two important information: likelihood for fitting unimodal, clusters. we also have the distributions too
+###########################
+
+  #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions
+#cluster the data using multimodal fitting
+  time_length = 0
+  #significant_tiles = data.frame(0,0.0)
+  significant_tiles = sig_tiles_total %>% mutate(0) %>% mutate(1)
+  counter = 1
+  for (i in 1:dim(tile_case)[2]){
+    ptm = Sys.time()
+    if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
+      try({k = Mclust(tile_case[,i],verbose = FALSE)})
+      s
+     
+      tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
+      #clust1 = tile_case_clust %>% filter(cluster == 1)
+      #clust2 = tile_case_clust %>% filter(cluster == 2)
+      #stat_test = t.test(clust1,clust2,var.equal = FALSE, paired = FALSE)
+      
+      #only keep ones with more than one component (multimodals)
+      if (length(unique(k$classification)) > 1){
+        significant_tiles[counter,] = c(i,k$loglik, k$bic, length(unique(k$classification)))
+        counter = counter+1
+      }
+    }
     
+    
+    if (i %% 10 == 0){
+      print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length/10,sep = ""))
+      time_length = 0
+    }else{
+      time_length = time_length + (Sys.time() - ptm) * (dim(tile_case)[2] - i)/60
+    }
+  }
+  #add column names
+  colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num')
+  #only keep the rows that has been filled up
+  significant_tiles = significant_tiles %>% slice(1:counter-1)
+  #sig_tiles_total = significant_tiles
+  
+  #tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
+  #look at the pvalues histogram
+  significant_tiles %>% ggplot(aes(x = loglik))+
+    geom_density() + 
+    xlim(-20,500)
+  
+  #look at the position of tiles with lowest pvalue
+  #selected_tiles = significant_tiles %>% filter(significant_tiles$pvalue < 1e-8) %>% arrange(pvalue)
+  #look at the position of tiles in the top 1% (in terms of lowest p-value)
+  selected_tiles = significant_tiles %>% arrange(loglik) %>% slice(1:round(dim(significant_tiles)[1]*.01))
+  #top selected distribution on genome
+  selected_tiles %>% ggplot(aes(x = tile))+
+    geom_density(alpha = 0.6) + 
+    xlim(0,300000)+ theme_minimal()
+  
+significant_tiles_backup = significant_tiles
 
-
-
-
-
-
-#note: here we will find best number of cluster and use anova for statistics value
 #cluster the data using kmeans
 for (i in 1:dim(tile_case)[2]){
   #finding best number of clusters using silhouette
