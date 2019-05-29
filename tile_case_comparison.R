@@ -98,7 +98,7 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
 #start working on the bimodal idea
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,172])
+  tile1 = as.data.frame(tile_case[,252709])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968
   #for bimodal: tile 276
@@ -109,10 +109,12 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   tile1$cluster = as.factor(tile1$cluster)
   tile1 %>% ggplot(aes(x = `coverage`, y = cluster))+geom_point()  #look at the position of points in clusters
   tile1 %>% ggplot(aes(x = coverage))+geom_density(alpha = 0.4)+theme_minimal()
+  
   tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal()
-  #here we have two important information: likelihood for fitting unimodal, clusters. we also have the distributions too
+#here we have two important information: likelihood for fitting unimodal, clusters. we also have the distributions too
 ###########################
 
+  
   #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions
 #cluster the data using multimodal fitting
   time_length = 0
@@ -123,7 +125,7 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
     ptm = Sys.time()
     if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
       try({k = Mclust(tile_case[,i],verbose = FALSE)})
-      s
+      
      
       tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
       #clust1 = tile_case_clust %>% filter(cluster == 1)
@@ -165,8 +167,71 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   selected_tiles %>% ggplot(aes(x = tile))+
     geom_density(alpha = 0.6) + 
     xlim(0,300000)+ theme_minimal()
+  selected_tiles %>% ggplot(aes(x = tile, fill = as.factor(modal_num)))+
+    geom_histogram(binwidth = 100,alpha = 0.6,) + 
+    xlim(0,dim(significant_tiles)[1])+ theme(line = )
   
 significant_tiles_backup = significant_tiles
+
+#look at the position of results in genome
+  #make a data frame of all the tile positions:
+  tile_pos = as.data.frame(file$tile) %>% select(seqnames,start,end,strand,target,arm,seg)
+  tile_pos = tile_pos %>% mutate(tile = row_number())
+  
+  tile_modal = left_join(tile_pos, significant_tiles, by = "tile")
+  
+  tile_modal %>% filter(seqnames == 'chr8' & modal_num > 5)
+  #get each chromosome tile boundary:
+  tile_modal %>% group_by(seqnames) %>% summarise(min(tile),max(tile))
+  
+  #plot the positions
+  (tile_modal %>% filter(modal_num > 1)) %>% ggplot()+
+    geom_histogram(binwidth = 200,alpha = 0.6,aes(x = tile, fill = ..count.. > 20)) + 
+    xlim(0,287509)+ theme_minimal()+scale_fill_manual(values=c("#FFFFFF", "red"))+
+    
+    
+    geom_vline(xintercept = 24896,linetype = "dashed",size = 0.1)+ geom_text(x = 24896, y = 0, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 49116,linetype = "dashed",size = 0.1)+ geom_text(x = 49116, y = 0, label = "chr2", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 68946,linetype = "dashed",size = 0.1)+ geom_text(x = 68946, y = 0, label = "chr3", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 87968,linetype = "dashed",size = 0.1)+ geom_text(x = 87968, y = 0, label = "chr4", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 106122,linetype = "dashed",size = 0.1)+ geom_text(x = 106122, y = 0, label = "chr5", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 123203,linetype = "dashed",size = 0.1)+ geom_text(x = 123203, y = 0, label = "chr6", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 139138,linetype = "dashed",size = 0.1)+ geom_text(x = 139138, y = 0, label = "chr7", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 153652,linetype = "dashed",size = 0.1)+ geom_text(x = 153652, y = 0, label = "chr8", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 167492,linetype = "dashed",size = 0.1)+ geom_text(x = 167492, y = 0, label = "chr9", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 180872,linetype = "dashed",size = 0.1)+ geom_text(x = 180872, y = 0, label = "chr10", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 194381,linetype = "dashed",size = 0.1)+ geom_text(x = 194381, y = 0, label = "chr11", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 207709,linetype = "dashed",size = 0.1)+ geom_text(x = 207709, y = 0, label = "chr12", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 219146,linetype = "dashed",size = 0.1)+ geom_text(x = 219146, y = 0, label = "chr13", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 229851,linetype = "dashed",size = 0.1)+ geom_text(x = 229851, y = 0, label = "chr14", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 240051,linetype = "dashed",size = 0.1)+ geom_text(x = 240051, y = 0, label = "chr15", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 249085,linetype = "dashed",size = 0.1)+ geom_text(x = 249085, y = 0, label = "chr16", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 257411,linetype = "dashed",size = 0.1)+ geom_text(x = 257411, y = 0, label = "chr17", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 265449,linetype = "dashed",size = 0.1)+ geom_text(x = 265449, y = 0, label = "chr18", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 271311,linetype = "dashed",size = 0.1)+ geom_text(x = 271311, y = 0, label = "chr19", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 277756,linetype = "dashed",size = 0.1)+ geom_text(x = 277756, y = 0, label = "chr20", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 282427,linetype = "dashed",size = 0.1)+ geom_text(x = 282427, y = 0, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0)+
+    geom_vline(xintercept = 287509,linetype = "dashed",size = 0.1)+ geom_text(x = 287509, y = 0, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0)
+#    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
+#    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
+
+
+#adding fragile sites to the previous plot:
+  fragile = read_tsv("/home/noshadh/Codes/Germline_variation_detection/Fragile_sites", col_names = FALSE)
+  fragile = fragile %>% select(X1,X2,X3,X4)
+  colnames(fragile) = c('chr','start','end','site_name')
+
+
+
+
+
+
+
+
+
+
+
+
 
 #cluster the data using kmeans
 for (i in 1:dim(tile_case)[2]){
@@ -183,17 +248,6 @@ library(pheatmap)
 annotation_sam_pheatmap=data.frame(cluster=factor(k$cluster))
 pheatmap(as.matrix((tile_case[,i])),annotation=t(annotation_sam_pheatmap),cluster_cols=F,fontsize_row=5,fontsize_col=3)
 
-
-#optimal number of clustering
-
-fviz_nbclust(as.data.frame(tile_case[,i]), kmeans, method = "silhouette")
-
-gap_stat <- clusGap(as.data.frame(tile_case[,i]), FUN = kmeans, nstart = 100,
-                    K.max = 10, B = 50)
-fviz_gap_stat(gap_stat)
-
-#temp
-data_tile = as.data.frame(tile_case[,i]) %>% mutate(clustering = k$cluster)
 
 
 
