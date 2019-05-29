@@ -220,7 +220,43 @@ significant_tiles_backup = significant_tiles
   fragile = read_tsv("/home/noshadh/Codes/Germline_variation_detection/Fragile_sites", col_names = FALSE)
   fragile = fragile %>% select(X1,X2,X3,X4)
   colnames(fragile) = c('chr','start','end','site_name')
-
+  #map to tiles
+  fragile = fragile %>% mutate(tile_start = 0) %>% mutate(tile_end = 0)
+  for (i in 1:dim(fragile)[1]){
+    #here, for every member of fragile, we will find the tile. O(N^2), BAD BAD BAD !!!
+    chr = fragile$chr[i]
+    chr_tiles = tile_modal %>% filter(seqnames == chr)
+    
+    start_tile_on_chr = round(fragile[i,]$start/10000)+1
+    end_tile_on_chr = round(fragile[i,]$end/10000)
+    
+    if (fragile[i,]$end > max(chr_tiles$end)){
+      end_tile_on_chr = dim(chr_tiles)[1]
+    }
+    fragile[i,5] = chr_tiles %>% slice(start_tile_on_chr) %>% select(tile)
+    fragile[i,6] = chr_tiles %>% slice(end_tile_on_chr) %>% select(tile)
+    
+    print(paste("Fragile site number",i,"has been processed..."))
+  }
+  
+  #till here has been tested and works
+  
+  
+  #convert the positions, to 
+  s_positions = fragile %>% select(pos = tile_start) %>% mutate(type = "start")
+  e_positions = fragile %>% select(pos = tile_end) %>% mutate(type = "end")
+  positions = rbind(s_positions, e_positions)
+  
+  p = ggplot()
+  for (i in 5:7){
+    p = p + geom_segment(aes(x=s_positions$pos[i],xend=e_positions$pos[i],y=1,yend=1))
+  }
+  p = p + geom_segment(aes(x=s_positions$pos[i],xend=e_positions$pos[i],y=18,yend=18)) + geom_segment(aes(x=s_positions$pos[i+6],xend=e_positions$pos[i+6],y=18,yend=18))
+  p = p + geom_segment(aes(x=s_positions$pos[i+23],xend=e_positions$pos[i+23],y=18,yend=18))
+  p
+  ggplot()+geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=18,yend=18))
+    geom_vline(xintercept = s_positions$pos, aes(fill = 'red'))+
+    geom_vline(xintercept = e_positions$pos)
 
 
 
