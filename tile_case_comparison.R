@@ -6,6 +6,7 @@ library(gplots)
 library(cluster)    # clustering algorithms
 library(factoextra) # clustering algorithms & visualization
 library(mclust)
+library(gridExtra)
 
 set.seed(1024)
 
@@ -37,7 +38,7 @@ write.table(tile_case, "/home/noshadh/Codes/Germline_variation_detection/Tile_ca
 #look at the density of coverages for each segment
 as.data.frame(tile_case %>% select(`C3N-01522-hl5`)) %>%
   ggplot(aes(x = `C3N-01522-hl5`))+
-  geom_density()+
+  geom_histogram()+
   xlim(0,1)+ylim(0,5)
 
 #make a Hierarchical Clustering heatmap
@@ -83,22 +84,63 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   #look at the position of tiles with lowest pvalue
   #selected_tiles = significant_tiles %>% filter(significant_tiles$pvalue < 1e-8) %>% arrange(pvalue)
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
-  selected_tiles = significant_tiles %>% arrange(pvalue) %>% slice(1:round(dim(significant_tiles)[1]*.01))
+  selected_tiles = sig_tiles_total %>% arrange(pvalue) %>% slice(1:round(dim(significant_tiles)[1]*1))
   #top selected distribution on genome
-  selected_tiles %>% ggplot(aes(x = tile))+
-    geom_density() + 
-    xlim(0,dim(tile_case)[2])+ theme_minimal()
+  selected_tiles %>% ggplot()+
+    geom_histogram(binwidth = 100,aes(x = tile, fill = "#01e0cf"))+
+    xlim(0,287509)+ theme_classic()+
+    geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+
+    geom_text(x = 24896, y = -1, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+
+    geom_text(x = 49116, y = -1, label = "chr2", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 68946,linetype = "dashed",size = 0.3)+
+    geom_text(x = 68946, y = -1, label = "chr3", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 87968,linetype = "dashed",size = 0.3)+
+    geom_text(x = 87968, y = -1, label = "chr4", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 106122,linetype = "dashed",size = 0.3)+
+    geom_text(x = 106122, y = -1, label = "chr5", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 123203,linetype = "dashed",size = 0.3)+
+    geom_text(x = 123203, y = -1, label = "chr6", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 139138,linetype = "dashed",size = 0.3)+
+    geom_text(x = 139138, y = -1, label = "chr7", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 153652,linetype = "dashed",size = 0.3)+
+    geom_text(x = 153652, y = -1, label = "chr8", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 167492,linetype = "dashed",size = 0.3)+
+    geom_text(x = 167492, y = -1, label = "chr9", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 180872,linetype = "dashed",size = 0.3)+
+    geom_text(x = 180872, y = -1, label = "chr10", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 194381,linetype = "dashed",size = 0.3)+
+    geom_text(x = 194381, y = -1, label = "chr11", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 207709,linetype = "dashed",size = 0.3)+
+    geom_text(x = 207709, y = -1, label = "chr12", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 219146,linetype = "dashed",size = 0.3)+
+    geom_text(x = 219146, y = -1, label = "chr13", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 229851,linetype = "dashed",size = 0.3)+
+    geom_text(x = 229851, y = -1, label = "chr14", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 240051,linetype = "dashed",size = 0.3)+
+    geom_text(x = 240051, y = -1, label = "chr15", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 249085,linetype = "dashed",size = 0.3)+
+    geom_text(x = 249085, y = -1, label = "chr16", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 257411,linetype = "dashed",size = 0.3)+
+    geom_text(x = 257411, y = -1, label = "chr17", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 265449,linetype = "dashed",size = 0.3)+
+    geom_text(x = 265449, y = -1, label = "chr18", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 271311,linetype = "dashed",size = 0.3)+
+    geom_text(x = 271311, y = -1, label = "chr19", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 277756,linetype = "dashed",size = 0.3)+
+    geom_text(x = 277756, y = -1, label = "chr20", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 282427,linetype = "dashed",size = 0.3)+
+    geom_text(x = 282427, y = -1, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+    geom_text(x = 287509, y = -1, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))
     
-  #find the position on chromosome
-  tile_ranges = as.data.frame(ranges(file$tile))
-  tile_ranges %>% filter(start < 30420200 & end > 30420200)
 
   
   
 #start working on the bimodal idea
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,252709])
+  tile1 = as.data.frame(tile_case[,1663])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968
   #for bimodal: tile 276
@@ -108,9 +150,11 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   tile1 = tile1 %>% mutate(cluster = tile1.gmm$classification)
   tile1$cluster = as.factor(tile1$cluster)
   tile1 %>% ggplot(aes(x = `coverage`, y = cluster))+geom_point()  #look at the position of points in clusters
+
   tile1 %>% ggplot(aes(x = coverage))+geom_density(alpha = 0.4)+theme_minimal()
-  
+
   tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal()
+
 #here we have two important information: likelihood for fitting unimodal, clusters. we also have the distributions too
 ###########################
 
@@ -171,53 +215,9 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
     geom_histogram(binwidth = 100,alpha = 0.6,) + 
     xlim(0,dim(significant_tiles)[1])+ theme(line = )
   
-significant_tiles_backup = significant_tiles
+  significant_tiles_backup = significant_tiles
 
-#look at the position of results in genome
-  #make a data frame of all the tile positions:
-  tile_pos = as.data.frame(file$tile) %>% select(seqnames,start,end,strand,target,arm,seg)
-  tile_pos = tile_pos %>% mutate(tile = row_number())
   
-  tile_modal = left_join(tile_pos, significant_tiles, by = "tile")
-  
-  tile_modal %>% filter(seqnames == 'chr8' & modal_num > 5)
-  #get each chromosome tile boundary:
-  tile_modal %>% group_by(seqnames) %>% summarise(min(tile),max(tile))
-  
-  #plot the positions
-   ggplot()+
-    geom_histogram(na.rm = TRUE,data = (tile_modal %>% filter(modal_num > 1)),binwidth = 100,alpha = 0.6,aes(x = tile, fill = ..count.. > 10)) + 
-    xlim(0,287509)+ theme_classic()+scale_fill_manual(values=c("#e1e6cf", "dark green"))+
-     #geom_hline(yintercept = 10)+
-   
-    geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+ geom_text(x = 24896, y = -4.5, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+ geom_text(x = 49116, y = -4.5, label = "chr2", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 68946,linetype = "dashed",size = 0.3)+ geom_text(x = 68946, y = -4.5, label = "chr3", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 87968,linetype = "dashed",size = 0.3)+ geom_text(x = 87968, y = -4.5, label = "chr4", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 106122,linetype = "dashed",size = 0.3)+ geom_text(x = 106122, y = -4.5, label = "chr5", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 123203,linetype = "dashed",size = 0.3)+ geom_text(x = 123203, y = -4.5, label = "chr6", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 139138,linetype = "dashed",size = 0.3)+ geom_text(x = 139138, y = -4.5, label = "chr7", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 153652,linetype = "dashed",size = 0.3)+ geom_text(x = 153652, y = -4.5, label = "chr8", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 167492,linetype = "dashed",size = 0.3)+ geom_text(x = 167492, y = -4.5, label = "chr9", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 180872,linetype = "dashed",size = 0.3)+ geom_text(x = 180872, y = -4.5, label = "chr10", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 194381,linetype = "dashed",size = 0.3)+ geom_text(x = 194381, y = -4.5, label = "chr11", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 207709,linetype = "dashed",size = 0.3)+ geom_text(x = 207709, y = -4.5, label = "chr12", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 219146,linetype = "dashed",size = 0.3)+ geom_text(x = 219146, y = -4.5, label = "chr13", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 229851,linetype = "dashed",size = 0.3)+ geom_text(x = 229851, y = -4.5, label = "chr14", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 240051,linetype = "dashed",size = 0.3)+ geom_text(x = 240051, y = -4.5, label = "chr15", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 249085,linetype = "dashed",size = 0.3)+ geom_text(x = 249085, y = -4.5, label = "chr16", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 257411,linetype = "dashed",size = 0.3)+ geom_text(x = 257411, y = -4.5, label = "chr17", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 265449,linetype = "dashed",size = 0.3)+ geom_text(x = 265449, y = -4.5, label = "chr18", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 271311,linetype = "dashed",size = 0.3)+ geom_text(x = 271311, y = -4.5, label = "chr19", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 277756,linetype = "dashed",size = 0.3)+ geom_text(x = 277756, y = -4.5, label = "chr20", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 282427,linetype = "dashed",size = 0.3)+ geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+ geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))
-    
-#    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
-#    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
-
-
 #adding fragile sites to the previous plot:
   fragile = read_tsv("/home/noshadh/Codes/Germline_variation_detection/Fragile_sites", col_names = FALSE)
   fragile = fragile %>% select(X1,X2,X3,X4)
@@ -247,31 +247,94 @@ significant_tiles_backup = significant_tiles
   positions = rbind(s_positions, e_positions)
   
   p = p + geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=1,yend=1))
-  p  
-
-
-
-
-
-
-
-
-
-#cluster the data using kmeans
-for (i in 1:dim(tile_case)[2]){
-  #finding best number of clusters using silhouette
-  best_clust_num = fviz_nbclust(as.data.frame(tile_case[,i]), kmeans, method = "silhouette")
-  best_clust_num = as.numeric(best_clust_num$data %>% filter(y == max(best_clust_num$data$y)) %>% select(clusters))
-  k = kmeans(tile_case[,i],centers = best_clust_num, nstart = 100)
   
-  print(paste("Tile processed: ",i,"/",dim(tile_case)[2],sep = ""))
-}
-euci_dist = get_dist(tile_case[,i])
-
-library(pheatmap)
-annotation_sam_pheatmap=data.frame(cluster=factor(k$cluster))
-pheatmap(as.matrix((tile_case[,i])),annotation=t(annotation_sam_pheatmap),cluster_cols=F,fontsize_row=5,fontsize_col=3)
-
+# CHANGE THE SELECTED TILES, BASED ON THEIR LOG-LIKELIHOOD AND BIC
+  #look at the relation between BIC and loglik, I expect it to be descending
+  significant_tiles %>% ggplot(aes(x = loglik, y = bic))+
+    geom_point()
+  # WEIRD!!!!!!!!!!!!!
+  selected_tiles = significant_tiles %>% arrange(desc(loglik)) %>% slice(1:round(dim(significant_tiles)[1]*.1))
+  dim(selected_tiles)  
+  
+  
+#look at the position of results in genome
+  #make a data frame of all the tile positions:
+  tile_pos = as.data.frame(file$tile) %>% select(seqnames,start,end,strand,target,arm,seg)
+  tile_pos = tile_pos %>% mutate(tile = row_number())
+  
+  #tile_modal = left_join(tile_pos, significant_tiles, by = "tile")
+  tile_modal = inner_join(tile_pos, selected_tiles, by = "tile")
+  
+  #get each chromosome tile boundary:
+  tile_modal %>% group_by(seqnames) %>% summarise(min(tile),max(tile))
+  
+  #make the tile modal binary (i.e marking the even/odd chromosomes for plot)
+  tile_modal = tile_modal %>% mutate(evenChr = case_when(seqnames == 'chr2' ~ TRUE,
+                                               seqnames == 'chr4' ~ TRUE,
+                                               seqnames == 'chr6' ~ TRUE,
+                                               seqnames == 'chr8' ~ TRUE,
+                                               seqnames == 'chr10' ~ TRUE,
+                                               seqnames == 'chr12' ~ TRUE,
+                                               seqnames == 'chr14' ~ TRUE,
+                                               seqnames == 'chr16' ~ TRUE,
+                                               seqnames == 'chr18' ~ TRUE,
+                                               seqnames == 'chr20' ~ TRUE,
+                                               seqnames == 'chr22' ~ TRUE,
+                                               TRUE ~ FALSE))
+  #plot the positions
+   ggplot()+
+    geom_histogram(na.rm = TRUE,data = (tile_modal %>% filter(modal_num < 4)),binwidth = 100,alpha = 0.6,aes(x = tile, color = as.factor(evenChr))) + 
+    xlim(0,287509)+ theme_classic()+
+     geom_hline(yintercept = 8)+scale_fill_manual(values=c("#e1e6cf", "dark green"))+
+   
+    #geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+
+    geom_text(x = 24896, y = -4.5, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+
+     geom_text(x = 49116, y = -4.5, label = "chr2", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 68946,linetype = "dashed",size = 0.3)+
+     geom_text(x = 68946, y = -4.5, label = "chr3", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 87968,linetype = "dashed",size = 0.3)+
+     geom_text(x = 87968, y = -4.5, label = "chr4", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 106122,linetype = "dashed",size = 0.3)+
+     geom_text(x = 106122, y = -4.5, label = "chr5", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 123203,linetype = "dashed",size = 0.3)+
+     geom_text(x = 123203, y = -4.5, label = "chr6", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 139138,linetype = "dashed",size = 0.3)+
+     geom_text(x = 139138, y = -4.5, label = "chr7", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 153652,linetype = "dashed",size = 0.3)+
+     geom_text(x = 153652, y = -4.5, label = "chr8", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 167492,linetype = "dashed",size = 0.3)+
+     geom_text(x = 167492, y = -4.5, label = "chr9", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 180872,linetype = "dashed",size = 0.3)+
+     geom_text(x = 180872, y = -4.5, label = "chr10", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 194381,linetype = "dashed",size = 0.3)+
+     geom_text(x = 194381, y = -4.5, label = "chr11", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 207709,linetype = "dashed",size = 0.3)+
+     geom_text(x = 207709, y = -4.5, label = "chr12", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 219146,linetype = "dashed",size = 0.3)+
+     geom_text(x = 219146, y = -4.5, label = "chr13", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 229851,linetype = "dashed",size = 0.3)+
+     geom_text(x = 229851, y = -4.5, label = "chr14", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 240051,linetype = "dashed",size = 0.3)+
+     geom_text(x = 240051, y = -4.5, label = "chr15", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 249085,linetype = "dashed",size = 0.3)+
+     geom_text(x = 249085, y = -4.5, label = "chr16", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 257411,linetype = "dashed",size = 0.3)+
+     geom_text(x = 257411, y = -4.5, label = "chr17", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 265449,linetype = "dashed",size = 0.3)+
+     geom_text(x = 265449, y = -4.5, label = "chr18", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 271311,linetype = "dashed",size = 0.3)+
+     geom_text(x = 271311, y = -4.5, label = "chr19", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 277756,linetype = "dashed",size = 0.3)+
+     geom_text(x = 277756, y = -4.5, label = "chr20", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 282427,linetype = "dashed",size = 0.3)+
+     geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    #geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+     geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
+    geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values")
+    
+        #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
+#    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 
 
 
