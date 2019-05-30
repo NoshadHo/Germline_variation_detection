@@ -1,5 +1,5 @@
 library(GenomicRanges)
-library(cnvex)
+library(cnvex) #this is a local library, might not work on other machines
 library(tidyverse)
 library(rlist)
 library(gplots)
@@ -7,19 +7,18 @@ library(cluster)    # clustering algorithms
 library(factoextra) # clustering algorithms & visualization
 library(mclust)
 library(gridExtra)
-
 set.seed(1024)
 
+##READ THE FILES-------------------------------------------------------------------------------------------------------------
 #set the file directories
 setwd("/mctp/users/mcieslik/proj/study/cptac3/data/cnvex-hl5/")
-
 #get a list of folders
 files = list.files()
-
 #results file
 tile_case = list()
 colnames_list = ""
 #reading each file, process it, save the n.cov information, delete the file
+#here we use list, to improve the performance and get results faster
 for (file_num in 1:length(files)-1){
   file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))
   tiles = as.data.frame(file$tile)
@@ -27,64 +26,55 @@ for (file_num in 1:length(files)-1){
   colnames_list[file_num] = files[file_num]
   print(paste("File processed: ",file_num,"/",length(files),sep = ""))
 }
-
 #convert a list to data frame
 tile_case = as.data.frame(matrix(unlist(tile_case),ncol = length(tile_case), byrow = FALSE))
 colnames(tile_case) = colnames_list
-
 #write the file and data frames
 write.table(tile_case, "/home/noshadh/Codes/Germline_variation_detection/Tile_case_hl5.tsv", sep = "\t", col.names = TRUE)
 
-#look at the density of coverages for each segment
-as.data.frame(tile_case %>% select(`C3N-01522-hl5`)) %>%
-  ggplot(aes(x = `C3N-01522-hl5`))+
-  geom_histogram()+
-  xlim(0,1)+ylim(0,5)
-
+##INITIAL ANALYSIS-------------------------------------------------------------------------------------------------------------
 #make a Hierarchical Clustering heatmap
+#the heatmap is so big, we need to look at the samll chunk of tiles
 tile_case = t(tile_case)
-heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="none")
+dev.off()
+heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none")
 
-
-
-
+##K-MEANS METHOD---------------------------------------------------------------------------------------------------------------
 #cluster the data using kmeans for 2 clusters
   time_length = 0
-  significant_tiles = data.frame(0,0.0)
-  significant_tiles = sig_tiles_total
-  counter = 1
+  
+  #use any dataframe with the dimentions of 300000      2 (or whatever number of tiles we have)
+  significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 2)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
+  counter = 1 #counter for the output file
   for (i in 1:dim(tile_case)[2]){
     ptm = Sys.time()
     try({k = kmeans(tile_case[,i],centers = 2, nstart = 100)})
-    tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$cluster)
+    tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$cluster) #add corresponding clusters for each sampleto the data.frame
     clust1 = tile_case_clust %>% filter(cluster == 1)
     clust2 = tile_case_clust %>% filter(cluster == 2)
-    stat_test = t.test(clust1,clust2,var.equal = FALSE, paired = FALSE)
-    if (stat_test$p.value < 0.000001){
+    stat_test = t.test(clust1,clust2,var.equal = FALSE, paired = FALSE) #find the significance
+    if (stat_test$p.value < 0.000001){ #select only significant ones
       significant_tiles[counter,] = c(i,stat_test$p.value)
       counter = counter+1
     }
-    
-    time_length = 0.3*(time_length) + 0.7*((Sys.time() - ptm) * (dim(tile_case)[2] - i)/60)
-    
+    time_length = 0.3*(time_length) + 0.7*((Sys.time() - ptm) * (dim(tile_case)[2] - i)/60) #estimate the remainig time, FUN :))
     print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length,sep = ""))
   }
-  #add column names
+  #add column names to data.frame
   colnames(significant_tiles) = c('tile', 'pvalue')
   #only keep the rows that has been filled up
   significant_tiles = significant_tiles %>% slice(1:counter)
-  #sig_tiles_total = significant_tiles
+  #Optional analysis that can be used for each tile (quality control)
+  tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
   
-  #tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = log10(pvalue)))+
     geom_density() + 
     xlim(-13,0)
-
-  #look at the position of tiles with lowest pvalue
-  #selected_tiles = significant_tiles %>% filter(significant_tiles$pvalue < 1e-8) %>% arrange(pvalue)
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
-  selected_tiles = sig_tiles_total %>% arrange(pvalue) %>% slice(1:round(dim(significant_tiles)[1]*1))
+  selected_tiles = sig_tiles_total %>% arrange(pvalue) %>% slice(1:round(dim(significant_tiles)[1]*0.01))
+  
+  #PLOTING
   #top selected distribution on genome
   selected_tiles %>% ggplot()+
     geom_histogram(binwidth = 100,aes(x = tile, fill = "#01e0cf"))+
@@ -136,54 +126,47 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
     
 
   
-  
-#start working on the bimodal idea
+##MULTIMODAL METHOD---------------------------------------------------------------------------------------------------------------
+
+#start working on the bimodal idea, test if it works for one tiles
+#whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,1663])
+  tile1 = as.data.frame(tile_case[22967,])
   colnames(tile1) = "coverage"
-  #for trimodal: tile 111968
-  #for bimodal: tile 276
-  #for unimodal: tile 1663
-  tile1.gmm = Mclust(tile1)
+  #for trimodal: tile 111968 in lh5
+  #for bimodal: tile 276 in lh5
+  #for unimodal: tile 1663 in lh5
+  tile1.gmm = Mclust(tile1) #multimodal fitting
   summary(tile1.gmm)
-  tile1 = tile1 %>% mutate(cluster = tile1.gmm$classification)
+  tile1 = tile1 %>% mutate(cluster = tile1.gmm$classification) #add clusters to data.frame
   tile1$cluster = as.factor(tile1$cluster)
   tile1 %>% ggplot(aes(x = `coverage`, y = cluster))+geom_point()  #look at the position of points in clusters
+    
+  tile1 %>% ggplot(aes(x = coverage))+geom_density(alpha = 0.4)+theme_minimal() #look at the distribution of coverage in a specific tile as a whole
 
-  tile1 %>% ggplot(aes(x = coverage))+geom_density(alpha = 0.4)+theme_minimal()
-
-  tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal()
-
-#here we have two important information: likelihood for fitting unimodal, clusters. we also have the distributions too
+  tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal() #look at the distribution of coverage in a specific tile for each modal
 ###########################
 
-  
-  #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions
+#FITTING FOR ALL THE SAMPLES
+#interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
 #cluster the data using multimodal fitting
   time_length = 0
-  #significant_tiles = data.frame(0,0.0)
-  significant_tiles = sig_tiles_total %>% mutate(0) %>% mutate(1)
+  #use any dataframe with the dimentions of 300000      2 (or whatever number of tiles we have)
+  significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 4)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
   counter = 1
   for (i in 1:dim(tile_case)[2]){
     ptm = Sys.time()
     if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
       try({k = Mclust(tile_case[,i],verbose = FALSE)})
-      
-     
       tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
-      #clust1 = tile_case_clust %>% filter(cluster == 1)
-      #clust2 = tile_case_clust %>% filter(cluster == 2)
-      #stat_test = t.test(clust1,clust2,var.equal = FALSE, paired = FALSE)
-      
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
         significant_tiles[counter,] = c(i,k$loglik, k$bic, length(unique(k$classification)))
         counter = counter+1
       }
     }
-    
-    
+    #printing information every 10th tile with time estimation
     if (i %% 10 == 0){
       print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length/10,sep = ""))
       time_length = 0
@@ -195,44 +178,62 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num')
   #only keep the rows that has been filled up
   significant_tiles = significant_tiles %>% slice(1:counter-1)
-  #sig_tiles_total = significant_tiles
   
-  #tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
+  #Optional analysis that can be used for each tile (quality control){
+  tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = loglik))+
     geom_density() + 
     xlim(-20,500)
-  
-  #look at the position of tiles with lowest pvalue
-  #selected_tiles = significant_tiles %>% filter(significant_tiles$pvalue < 1e-8) %>% arrange(pvalue)
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
   selected_tiles = significant_tiles %>% arrange(loglik) %>% slice(1:round(dim(significant_tiles)[1]*.01))
-  #top selected distribution on genome
-  selected_tiles %>% ggplot(aes(x = tile))+
-    geom_density(alpha = 0.6) + 
-    xlim(0,300000)+ theme_minimal()
-  selected_tiles %>% ggplot(aes(x = tile, fill = as.factor(modal_num)))+
-    geom_histogram(binwidth = 100,alpha = 0.6,) + 
-    xlim(0,dim(significant_tiles)[1])+ theme(line = )
-  
+  #}
+  #have a back up after a time-consuming loop
   significant_tiles_backup = significant_tiles
-
   
+#GET READY FOR MULTIMODAL PLOT AND THEN PLOTING ---------------------------------------------------------------------------
+#make a general data.frame-join information we have, list of selected tiles, with their information on tile_case data.frame
+  
+  #look at the position of results in genome
+  #make a data frame of all the tile positions: #here we choose one of the files (original files containing Rds info, cnvex output)
+  tile_pos = as.data.frame(file$tile) %>% select(seqnames,start,end,strand,target,arm,seg) #extracting information of each tile
+  tile_pos = tile_pos %>% mutate(tile = row_number()) #add the indexing of each tile (indexing in the file is relative to chromosomes)
+  
+  tile_modal = left_join(tile_pos, significant_tiles, by = "tile")
+  
+  #get each chromosome tile boundary:
+  tile_modal %>% group_by(seqnames) %>% summarise(min(tile),max(tile)) #it is optional, we will use it for setting chr boundaries in plot
+  
+  #make the tile modal binary (i.e marking the even/odd chromosomes for plot)
+  tile_modal = tile_modal %>% mutate(evenChr = case_when(seqnames == 'chr2' ~ TRUE,
+                                                         seqnames == 'chr4' ~ TRUE,
+                                                         seqnames == 'chr6' ~ TRUE,
+                                                         seqnames == 'chr8' ~ TRUE,
+                                                         seqnames == 'chr10' ~ TRUE,
+                                                         seqnames == 'chr12' ~ TRUE,
+                                                         seqnames == 'chr14' ~ TRUE,
+                                                         seqnames == 'chr16' ~ TRUE,
+                                                         seqnames == 'chr18' ~ TRUE,
+                                                         seqnames == 'chr20' ~ TRUE,
+                                                         seqnames == 'chr22' ~ TRUE,
+                                                         TRUE ~ FALSE))
+  
+  
+#FRAGILE SITES
 #adding fragile sites to the previous plot:
   fragile = read_tsv("/home/noshadh/Codes/Germline_variation_detection/Fragile_sites", col_names = FALSE)
-  fragile = fragile %>% select(X1,X2,X3,X4)
+  fragile = fragile %>% select(X1,X2,X3,X4) #only need these values
   colnames(fragile) = c('chr','start','end','site_name')
   #map to tiles
   fragile = fragile %>% mutate(tile_start = 0) %>% mutate(tile_end = 0)
   for (i in 1:dim(fragile)[1]){
-    #here, for every member of fragile, we will find the tile. O(N^2), BAD BAD BAD !!!
-    chr = fragile$chr[i]
-    chr_tiles = tile_modal %>% filter(seqnames == chr)
+    chr = fragile$chr[i] #select the chromosome that fragile site is on
+    chr_tiles = tile_modal %>% filter(seqnames == chr) #select all the tiles on that fragile site
     
     start_tile_on_chr = round(fragile[i,]$start/10000)+1
     end_tile_on_chr = round(fragile[i,]$end/10000)
     
-    if (fragile[i,]$end > max(chr_tiles$end)){
+    if (fragile[i,]$end > max(chr_tiles$end)){ #there might be some fragile sites that would fall outside the chromosome targets boundaries that we have
       end_tile_on_chr = dim(chr_tiles)[1]
     }
     fragile[i,5] = chr_tiles %>% slice(start_tile_on_chr) %>% select(tile)
@@ -244,49 +245,15 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
   #convert the positions, to 
   s_positions = fragile %>% select(pos = tile_start) %>% mutate(type = "start")
   e_positions = fragile %>% select(pos = tile_end) %>% mutate(type = "end")
-  positions = rbind(s_positions, e_positions)
+  positions = rbind(s_positions, e_positions) #didn't used it at the end
   
-  p = p + geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=1,yend=1))
+  p = p + geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=1,yend=1)) #this p plot, has the boundaries for fragile sites, to be added to the final plot
   
-# CHANGE THE SELECTED TILES, BASED ON THEIR LOG-LIKELIHOOD AND BIC
-  #look at the relation between BIC and loglik, I expect it to be descending
-  significant_tiles %>% ggplot(aes(x = loglik, y = bic))+
-    geom_point()
-  # WEIRD!!!!!!!!!!!!!
-  selected_tiles = significant_tiles %>% arrange(desc(loglik)) %>% slice(1:round(dim(significant_tiles)[1]*.1))
-  dim(selected_tiles)  
-  
-  
-#look at the position of results in genome
-  #make a data frame of all the tile positions:
-  tile_pos = as.data.frame(file$tile) %>% select(seqnames,start,end,strand,target,arm,seg)
-  tile_pos = tile_pos %>% mutate(tile = row_number())
-  
-  #tile_modal = left_join(tile_pos, significant_tiles, by = "tile")
-  tile_modal = inner_join(tile_pos, selected_tiles, by = "tile")
-  
-  #get each chromosome tile boundary:
-  tile_modal %>% group_by(seqnames) %>% summarise(min(tile),max(tile))
-  
-  #make the tile modal binary (i.e marking the even/odd chromosomes for plot)
-  tile_modal = tile_modal %>% mutate(evenChr = case_when(seqnames == 'chr2' ~ TRUE,
-                                               seqnames == 'chr4' ~ TRUE,
-                                               seqnames == 'chr6' ~ TRUE,
-                                               seqnames == 'chr8' ~ TRUE,
-                                               seqnames == 'chr10' ~ TRUE,
-                                               seqnames == 'chr12' ~ TRUE,
-                                               seqnames == 'chr14' ~ TRUE,
-                                               seqnames == 'chr16' ~ TRUE,
-                                               seqnames == 'chr18' ~ TRUE,
-                                               seqnames == 'chr20' ~ TRUE,
-                                               seqnames == 'chr22' ~ TRUE,
-                                               TRUE ~ FALSE))
   #plot the positions
    ggplot()+
     geom_histogram(na.rm = TRUE,data = (tile_modal %>% filter(modal_num < 4)),binwidth = 100,alpha = 0.6,aes(x = tile, color = as.factor(evenChr))) + 
     xlim(0,287509)+ theme_classic()+
      geom_hline(yintercept = 8)+scale_fill_manual(values=c("#e1e6cf", "dark green"))+
-   
     #geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+
     geom_text(x = 24896, y = -4.5, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
     #geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+
@@ -331,16 +298,7 @@ heatmap.2(as.matrix(t(tile_case[229000:230000,])),density.info="none", trace="no
      geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
     #geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
      geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values")
-    
+    geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values") #geom segment add fragile sites
+    #if add two lines below to figure, chrx and chry will be added
         #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 #    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
-
-
-
-
-  #idea: 
-#cluster for each tile
-#test if significantly different
-#if yes, output which samples in each cluster, p-value, mean of each cluster
-#make sure the tiles are from targeted sites
