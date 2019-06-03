@@ -38,6 +38,7 @@
     tile_tile_corr_selected = data.frame(matrix(nrow = dim(vol_tiles)[1],ncol = dim(vol_tiles)[1]))
   #calculating the correlation (this function calculate between columns, so we transpose the data.frame)
     tile_tile_corr_selected = cor(t(vol_tiles))
+    tile_tile_corr_selected = as.data.frame(tile_tile_corr_selected)
   #write the file
     write_tsv(tile_tile_corr_selected, "/home/noshadh/Codes/Germline_variation_detection/selected_tiles_pairwise_correlation.tsv")
 
