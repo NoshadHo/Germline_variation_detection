@@ -9,6 +9,7 @@ library(mclust)
 library(gridExtra)
 set.seed(1024)
 
+#all the data are saved in K-means_Multimodal_fitting_data.RData, K-means data (first step) are available in Data_first.RData
 ##READ THE FILES-------------------------------------------------------------------------------------------------------------
 #set the file directories
 setwd("/mctp/users/mcieslik/proj/study/cptac3/data/cnvex-hl5/")
@@ -191,6 +192,9 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #have a back up after a time-consuming loop
   significant_tiles_backup = significant_tiles
   
+  #write the selected tiles:
+  write.table(significant_tiles, "/home/noshadh/Codes/Germline_variation_detection/Selected_volatile_tiles.tsv", sep = "\t", col.names = TRUE)
+    
 #GET READY FOR MULTIMODAL PLOT AND THEN PLOTING ---------------------------------------------------------------------------
 #make a general data.frame-join information we have, list of selected tiles, with their information on tile_case data.frame
   
@@ -302,3 +306,4 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
     #if add two lines below to figure, chrx and chry will be added
         #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 #    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
+   
