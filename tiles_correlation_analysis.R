@@ -91,10 +91,10 @@
     
 
 #BOXPLOT FOR ALL TILES ON EACH CHROMOSOME-------------------------------------------------------------------------------------------------------------------------------------------------
-  #find the correlation matrix on the chromosome
-    tile_num = 257411-249085+1
+  #find the correlation matrix on the chromosome 271311 265449
+    tile_num = 123203 - 106122+1
     max_group_nums = floor(tile_num/100) + 1
-    data_file = tile_case[249085:257411,] #to work with positiive/negetive file more easily
+    data_file = tile_case[123203:106122,] #to work with positiive/negetive file more easily
     data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
     data_file_corr = as.data.frame(abs(data_file_corr))
     colnames(data_file_corr) = 1:tile_num
@@ -103,20 +103,24 @@
   #Group points for each 1MB (100tiles)
     grouping_values = as.data.frame(matrix(nrow = max_group_nums, ncol = 0)) #249 groups in columns for each tile in row
     grouping_values = grouping_values %>% dplyr::mutate(group = 1:max_group_nums)
+    grouping_values_list = list()
     for (tile in 1:tile_num){
       row_values = data_file_corr %>% slice(tile)
       row_values = as.data.frame(t(row_values))
       row_values = row_values %>% mutate(group = floor(abs((row_number()-tile)/100))+1)
       #now take a mean over values in each group (we represent each group in a tile as a point)
       colnames(row_values) = c("corr", 'group')
-      row_values = row_values %>% group_by(group) %>% summarise(mean(corr))
+      row_values = row_values %>% group_by(group) %>% summarise(mean = mean(corr))
       #grouping_values[row,] = t(row_values[2])
-
-      grouping_values = grouping_values %>% left_join(row_values,by = "group")
+      row_values = as.matrix(row_values[,2])
+      length(row_values) = max_group_nums
+      grouping_values_list[[tile]] = row_values
+      #grouping_values = grouping_values %>% left_join(row_values,by = "group")
       print(paste("Tile processed:",tile))
     }
+    grouping_values = do.call(cbind,grouping_values_list)
     grouping_values_backup = grouping_values
-    grouping_values = grouping_values %>% select(-group)
+    #grouping_values = grouping_values %>% select(-group)
     colnames(grouping_values)[1:tile_num] = 1:tile_num
     
   #plot the boxplot
@@ -128,8 +132,9 @@
     df[,1] = as.integer(df[,1]) #to show 2 after 1 and not 10 (don't treat it like a string)
     df = df %>% arrange(key)
     
-    p = gather(df) %>% ggplot(aes(x = key, y = value, fill = key)) + ggtitle("Chr17 distance boxplots")+xlim(0,group_numbers_to_plot+1)+
-      geom_boxplot(na.rm = TRUE)+theme_minimal()
+    p = gather(df) %>% ggplot(aes(x = key, y = value, fill = key)) + ggtitle("Chr6 distance boxplots")+xlim(0,group_numbers_to_plot+1)+
+      geom_boxplot(na.rm = TRUE,fill = "lightgreen")+
+      theme_minimal()
     #+theme(axis.text.y = element_blank(),axis.ticks = element_blank())
     ggplotly(p)
     
