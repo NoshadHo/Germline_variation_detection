@@ -18,6 +18,7 @@
     library(gridExtra)
     library(corrr)
     library(plotly)
+    library(rlang)
     set.seed(1024)
 
   #Data load:
@@ -49,7 +50,7 @@
     rownames(tile_tile_corr_selected) = tile_order
     #make the correlations under 0 to it's absoloute value
     tile_tile_corr_selected_pos = abs(tile_tile_corr_selected)
-#PLOTS FOR  ONE TILE ------------------------------------------------------------------------------------------------------------------------------------------
+#BOXPLOTS FOR  ONE TILE ------------------------------------------------------------------------------------------------------------------------------------------
   #a simple plot for a arbitary tile, to look at it's correlation with other tiles
     data_file = tile_tile_corr_selected_pos #to work with positiive/negetive file more easily
     tile1_corr = data_file[1000,]
@@ -77,57 +78,63 @@
           axis.ticks = element_blank())
     ggplotly(p)
 
-#PLOTS FOR  ALL TILES ON CHROMOSOMES ------------------------------------------------------------------------------------------------------------------------------------------
-  #CHROMOSOME 19 IS FROM TILE 265449 TO 271311
-    data_file = tile_case[265449:271311,] #to work with positiive/negetive file more easily
+#HEATMAP PLOTS FOR  ALL TILES ON EACH CHROMOSOME------------------------------------------------------------------------------------------------------------------------------------------
+  #CHROMOSOME 17 IS FROM TILE 249085 TO 257411
+    data_file = tile_case[249085:257411,] #to work with positiive/negetive file more easily
     data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
     data_file_corr = abs(data_file_corr)
-    colnames(data_file_corr) = 265449:271311
-    rownames(data_file_corr) = 265449:271311
-    heatmap.2(data_file_corr[200:900,200:900],density.info="none", trace="none",Rowv = NULL, Colv = NULL)
-    corrplot(data_file_corr[1:200,1:200],type = 'lower')
+    colnames(data_file_corr) = 249085:257411
+    rownames(data_file_corr) = 249085:257411
+    
     pheatmap::pheatmap(as.matrix(data_file_corr),cluster_rows = FALSE,cluster_cols = FALSE,
-                       main = "CHR19 tile correlation")
-  #specify each tile groups (we devide tiles into groups of 100 on genome, 1Mb)
-    data_file_corr = data_file %>% mutate(group = 0)
-    group = 1
-    for (i in 1:dim(data_file)[1]){
-      if (tile_order[i] > group*2500){
-        group = group + 1
-      }
-      #data_file$group[i] = group #changed it with the line below to speed up
-      data_file[i,42736] = group 
-      print(i)
+                       main = "CHR17 tile correlation")
+    
+
+#BOXPLOT FOR ALL TILES ON EACH CHROMOSOME-------------------------------------------------------------------------------------------------------------------------------------------------
+  #find the correlation matrix on the chromosome
+    tile_num = 257411-249085+1
+    max_group_nums = floor(tile_num/100) + 1
+    data_file = tile_case[249085:257411,] #to work with positiive/negetive file more easily
+    data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
+    data_file_corr = as.data.frame(abs(data_file_corr))
+    colnames(data_file_corr) = 1:tile_num
+    rownames(data_file_corr) = 1:tile_num
+    
+  #Group points for each 1MB (100tiles)
+    grouping_values = as.data.frame(matrix(nrow = max_group_nums, ncol = 0)) #249 groups in columns for each tile in row
+    grouping_values = grouping_values %>% dplyr::mutate(group = 1:max_group_nums)
+    for (tile in 1:tile_num){
+      row_values = data_file_corr %>% slice(tile)
+      row_values = as.data.frame(t(row_values))
+      row_values = row_values %>% mutate(group = floor(abs((row_number()-tile)/100))+1)
+      #now take a mean over values in each group (we represent each group in a tile as a point)
+      colnames(row_values) = c("corr", 'group')
+      row_values = row_values %>% group_by(group) %>% summarise(mean(corr))
+      #grouping_values[row,] = t(row_values[2])
+
+      grouping_values = grouping_values %>% left_join(row_values,by = "group")
+      print(paste("Tile processed:",tile))
     }
-  #take mean over all the patients for each tile (we will have 1 value for each tile)
-  #a simple plot for a arbitary tile, to look at it's correlation with other tiles
+    grouping_values_backup = grouping_values
+    grouping_values = grouping_values %>% select(-group)
+    colnames(grouping_values)[1:tile_num] = 1:tile_num
     
-    tile1_corr = data_file[1000,]
-    tile_nums = 1:dim(data_file)[1]
-    tile1_corr = rbind(tile1_corr,tile_nums)
-  #group points for each 10mb
-    tile1_corr = rbind(tile1_corr,tile_nums)
+  #plot the boxplot
+    #making the data ready
+    group_numbers_to_plot = max_group_nums
+    df = as.data.frame(t(grouping_values[1:group_numbers_to_plot,])) #we only look at 10 groups
+    colnames(df) = 1:group_numbers_to_plot
+    df = gather(df) #it needs to be in this form for the plot
+    df[,1] = as.integer(df[,1]) #to show 2 after 1 and not 10 (don't treat it like a string)
+    df = df %>% arrange(key)
     
-    group = 1
-    for (i in 1:dim(data_file)[1]){
-      if (i > group*1000){
-        group = group + 1
-      }
-      tile1_corr[3,i] = (group)
-      
-      print(i)
-    }
-    tile1_corr[3,] = as.factor(tile1_corr[3,])
-    
-    df = as.data.frame(t(tile1_corr[,10000:20000]))
-    colnames(df) = c('value','index','group')
-    p = df %>% ggplot(aes(x = group, y = value, fill = group)) +
-      geom_boxplot(na.rm = TRUE) + theme(
-        axis.text.y = element_blank(),
-        axis.ticks = element_blank())
+    p = gather(df) %>% ggplot(aes(x = key, y = value, fill = key)) + ggtitle("Chr17 distance boxplots")+xlim(0,group_numbers_to_plot+1)+
+      geom_boxplot(na.rm = TRUE)+theme_minimal()
+    #+theme(axis.text.y = element_blank(),axis.ticks = element_blank())
     ggplotly(p)
     
-    #10MB BOX-PLOTS ANALYSIS------------------------------------------------------------------------------------------------------------------------
+    
+  #10MB BOX-PLOTS ANALYSIS------------------------------------------------------------------------------------------------------------------------
 #IN THIS PART, WE MEASURE EACH SELECTED TILE CORRELATION WITH:
 #GROUP 1: ALL THE TILES IN THE DISTANCE OF <10MB
 #GROUP 2: ALL THE TILES IN THE DISTANCE OF >10MB AND <20MB
