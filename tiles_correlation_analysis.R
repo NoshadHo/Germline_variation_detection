@@ -80,11 +80,11 @@
 
 #HEATMAP PLOTS FOR  ALL TILES ON EACH CHROMOSOME------------------------------------------------------------------------------------------------------------------------------------------
   #CHROMOSOME 17 IS FROM TILE 249085 TO 257411
-    data_file = tile_case[249085:257411,] #to work with positiive/negetive file more easily
+    data_file = tile_case[282427:277756,] #to work with positiive/negetive file more easily
     data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
     data_file_corr = abs(data_file_corr)
-    colnames(data_file_corr) = 249085:257411
-    rownames(data_file_corr) = 249085:257411
+    colnames(data_file_corr) = 282427:277756
+    rownames(data_file_corr) = 282427:277756
     
     pheatmap::pheatmap(as.matrix(data_file_corr),cluster_rows = FALSE,cluster_cols = FALSE,
                        main = "CHR17 tile correlation")
@@ -137,15 +137,4 @@
       theme_minimal()
     #+theme(axis.text.y = element_blank(),axis.ticks = element_blank())
     ggplotly(p)
-    
-    
-  #10MB BOX-PLOTS ANALYSIS------------------------------------------------------------------------------------------------------------------------
-#IN THIS PART, WE MEASURE EACH SELECTED TILE CORRELATION WITH:
-#GROUP 1: ALL THE TILES IN THE DISTANCE OF <10MB
-#GROUP 2: ALL THE TILES IN THE DISTANCE OF >10MB AND <20MB
-#...
-#DO THIS FOR ALL SELECTED TILES
-#KEEP THE RESULTS IN A DATA.FRAME
-#annotating where tiles belong (which box group)
-#every 10mb (1000 tile) go into one group
     
