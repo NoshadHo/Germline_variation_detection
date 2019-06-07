@@ -64,3 +64,4 @@
     
     grid.arrange(p_raw,p_norm)
     #SEEMS GOOD :) (Our objective here was to normalize coverage so regions with low GC and very high GC would have same coverage as middle of plot)
+    

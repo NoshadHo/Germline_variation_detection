@@ -50,6 +50,33 @@
     rownames(tile_tile_corr_selected) = tile_order
     #make the correlations under 0 to it's absoloute value
     tile_tile_corr_selected_pos = abs(tile_tile_corr_selected)
+    
+#HEATMAP PLOTS FOR  ALL TILES ON EACH CHROMOSOME------------------------------------------------------------------------------------------------------------------------------------------
+  #CHROMOSOME 17 IS FROM TILE 249085 TO 257411
+    chr = 19
+    data_file = tile_case[257411:249085,] #to work with positiive/negetive file more easily
+    data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
+    data_file_corr = abs(data_file_corr)
+    colnames(data_file_corr) = 257411:249085
+    rownames(data_file_corr) = 257411:249085
+    
+    pheatmap::pheatmap(as.matrix(data_file_corr),cluster_rows = FALSE,cluster_cols = FALSE,
+                       main = paste("GC_normalized_correlation for chromosome",chr))
+    
+#FINDING AND REMOVING CENTROMERS--------------------------------------------------------------------------------------------------------------------------------------
+  #We defind centromeres as a region where there are a square with more than 400 tile with correlation of 1
+    cent_row = 0
+    cent_col = 0
+    for (i in 1:dim(data_file)[1]-20){
+      j = 1
+      while (j < 1:dim(data_file)[1]-20){
+        if (sum(data_file[i:i+20,j:j+20]) > 350){
+          
+        }
+        j = j+20
+      }
+    }
+    
 #BOXPLOTS FOR  ONE TILE ------------------------------------------------------------------------------------------------------------------------------------------
   #a simple plot for a arbitary tile, to look at it's correlation with other tiles
     data_file = tile_tile_corr_selected_pos #to work with positiive/negetive file more easily
@@ -78,23 +105,11 @@
           axis.ticks = element_blank())
     ggplotly(p)
 
-#HEATMAP PLOTS FOR  ALL TILES ON EACH CHROMOSOME------------------------------------------------------------------------------------------------------------------------------------------
-  #CHROMOSOME 17 IS FROM TILE 249085 TO 257411
-    data_file = tile_case[282427:277756,] #to work with positiive/negetive file more easily
-    data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
-    data_file_corr = abs(data_file_corr)
-    colnames(data_file_corr) = 282427:277756
-    rownames(data_file_corr) = 282427:277756
-    
-    pheatmap::pheatmap(as.matrix(data_file_corr),cluster_rows = FALSE,cluster_cols = FALSE,
-                       main = "CHR17 tile correlation")
-    
-
 #BOXPLOT FOR ALL TILES ON EACH CHROMOSOME-------------------------------------------------------------------------------------------------------------------------------------------------
   #find the correlation matrix on the chromosome 271311 265449
-    tile_num = 123203 - 106122+1
+    tile_num = 257411 - 249085+1
     max_group_nums = floor(tile_num/100) + 1
-    data_file = tile_case[123203:106122,] #to work with positiive/negetive file more easily
+    data_file = tile_case[257411:249085,] #to work with positiive/negetive file more easily
     data_file_corr = cor(t(data_file),method = "spearman") #find the correlation
     data_file_corr = as.data.frame(abs(data_file_corr))
     colnames(data_file_corr) = 1:tile_num
@@ -122,7 +137,7 @@
     grouping_values_backup = grouping_values
     #grouping_values = grouping_values %>% select(-group)
     colnames(grouping_values)[1:tile_num] = 1:tile_num
-    
+      
   #plot the boxplot
     #making the data ready
     group_numbers_to_plot = max_group_nums
