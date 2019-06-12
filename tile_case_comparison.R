@@ -148,7 +148,11 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 
   tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal() #look at the distribution of coverage in a specific tile for each modal
 ###########################
-
+#if you want to try some other dataset instead of tile_case, do this:
+  #-it should be in the form of row:variables(features) col:tiles or samples
+  #and then run this:
+  right_form_of_data = as.data.frame(t(purified_tile_cov_gc_normalized))
+  tile_case = right_form_of_data
 #FITTING FOR ALL THE SAMPLES
 #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
 #cluster the data using multimodal fitting
@@ -169,7 +173,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
     }
     #printing information every 10th tile with time estimation
     if (i %% 10 == 0){
-      print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length/10,sep = ""))
+      print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- counter: ",counter,"------Time remaining:",time_length/10,sep = ""))
       time_length = 0
     }else{
       time_length = time_length + (Sys.time() - ptm) * (dim(tile_case)[2] - i)/60
