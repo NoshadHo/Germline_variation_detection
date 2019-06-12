@@ -178,14 +178,12 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #add column names
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num')
   #only keep the rows that has been filled up
-  significant_tiles = significant_tiles %>% slice(1:counter-1)
-  
-  #Optional analysis that can be used for each tile (quality control){
-  tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
+  #significant_tiles = significant_tiles %>% slice(1:counter-1)
+  significant_tiles = significant_tiles[1:counter-1,]
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = loglik))+
     geom_density() + 
-    xlim(-20,500)
+    xlim(-20,500)+ggtitle("loglik after GC correction")
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
   selected_tiles = significant_tiles %>% arrange(loglik) %>% slice(1:round(dim(significant_tiles)[1]*.01))
   #}
@@ -240,8 +238,8 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
     if (fragile[i,]$end > max(chr_tiles$end)){ #there might be some fragile sites that would fall outside the chromosome targets boundaries that we have
       end_tile_on_chr = dim(chr_tiles)[1]
     }
-    fragile[i,5] = chr_tiles %>% slice(start_tile_on_chr) %>% select(tile)
-    fragile[i,6] = chr_tiles %>% slice(end_tile_on_chr) %>% select(tile)
+    fragile[i,5] = chr_tiles[start_tile_on_chr,] %>% select(tile)
+    fragile[i,6] = chr_tiles[end_tile_on_chr,] %>% select(tile)
     
     print(paste("Fragile site number",i,"has been processed..."))
   }
@@ -302,7 +300,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
      geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
     #geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
      geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values") #geom segment add fragile sites
+     geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values") #geom segment add fragile sites
     #if add two lines below to figure, chrx and chry will be added
         #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 #    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)

@@ -55,6 +55,7 @@
       tile_cov_gc_normalized[patient] = gc.residuals
       print(paste("patient is proccessed:",patient))
     }
+    #Main results here is tile_cov_gc_normalized. the rest is for QC.
   #Quality control, ploting the same plot as last part, with new data  
     tile_cov_gc = tile_cov_gc_normalized %>% select(cov = !!patient_num)
     tile_cov_gc = tile_cov_gc %>% mutate(gc = tile_gc$gc)
