@@ -10,6 +10,8 @@ library(gridExtra)
 library(foreach)
 library(doParallel)
 set.seed(1024)
+numCores = detectCores()
+registerDoParallel(numCores-1)
 
 #all the data are saved in K-means_Multimodal_fitting_data.RData, K-means data (first step) are available in Data_first.RData
 ##READ THE FILES-------------------------------------------------------------------------------------------------------------
@@ -135,7 +137,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,9361])
+  tile1 = as.data.frame(tile_case[,80])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5
@@ -155,32 +157,22 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #and then run this:
   right_form_of_data = as.data.frame(t(purified_tile_cov_gc_normalized))
   tile_case = right_form_of_data
-#FITTING FOR ALL THE SAMPLES
-#interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
-#cluster the data using multimodal fitting
-  time_length = 0
-  #use any dataframe with the dimentions of 300000      2 (or whatever number of tiles we have)
-  significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 5)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
-  counter = 1
-  for (i in 1:dim(tile_case)[2]){
-    ptm = Sys.time()
+  #FITTING FOR ALL THE SAMPLES
+  #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
+  #cluster the data using multimodal fitting
+  PTIME = system.time({
+  significant_tiles = foreach(i = 1:dim(tile_case)[2]) %dopar% {
     if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
       try({k = Mclust(tile_case[,i],verbose = FALSE)})
       tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
-        significant_tiles[counter,] = c(i,k$loglik, k$bic, length(unique(k$classification)), min(table(k$classification)))
-        counter = counter+1
+        (c(i,k$loglik, k$bic, length(unique(k$classification)), min(table(k$classification))))
       }
     }
-    #printing information every 10th tile with time estimation
-    if (i %% 10 == 0){
-      print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- counter: ",counter,"------Time remaining:",time_length/10,sep = ""))
-      time_length = 0
-    }else{
-      time_length = time_length + (Sys.time() - ptm) * (dim(tile_case)[2] - i)/60
-    }
   }
+  })
+  significant_tiles = as.data.frame(do.call(rbind,significant_tiles))
   #add column names
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num', 'min_clust_size')
   #only keep the rows that has been filled up
