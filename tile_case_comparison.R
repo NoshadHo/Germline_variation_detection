@@ -133,7 +133,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[22967,])
+  tile1 = as.data.frame(tile_case[,9361])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5
@@ -167,7 +167,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
       tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
-        significant_tiles[counter,] = c(i,k$loglik, k$bic, length(unique(k$classification)))
+        significant_tiles[counter,] = c(i,k$loglik, k$bic, length(unique(k$classification)), min(table(k$classification)))
         counter = counter+1
       }
     }
@@ -180,10 +180,12 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
     }
   }
   #add column names
-  colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num')
+  colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num', 'min_clust_size')
   #only keep the rows that has been filled up
   #significant_tiles = significant_tiles %>% slice(1:counter-1)
   significant_tiles = significant_tiles[1:counter-1,]
+  #have a back up after a time-consuming loop
+  significant_tiles_backup = significant_tiles
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = loglik))+
     geom_density() + 
@@ -191,8 +193,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
   selected_tiles = significant_tiles %>% arrange(loglik) %>% slice(1:round(dim(significant_tiles)[1]*.01))
   #}
-  #have a back up after a time-consuming loop
-  significant_tiles_backup = significant_tiles
+
   
   #write the selected tiles:
   write.table(significant_tiles, "/home/noshadh/Codes/Germline_variation_detection/Selected_volatile_tiles.tsv", sep = "\t", col.names = TRUE)
@@ -257,54 +258,54 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   
   #plot the positions
    ggplot()+
-    geom_histogram(na.rm = TRUE,data = (tile_modal %>% filter(modal_num < 4)),binwidth = 100,alpha = 0.6,aes(x = tile, color = as.factor(evenChr))) + 
+    geom_histogram(na.rm = TRUE,data = (tile_modal %>% filter(modal_num < 8)),binwidth = 100,alpha = 0.6,aes(x = tile, color = as.factor(evenChr))) + 
     xlim(0,287509)+ theme_classic()+
      geom_hline(yintercept = 8)+scale_fill_manual(values=c("#e1e6cf", "dark green"))+
-    #geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 24896,linetype = "dashed",size = 0.3)+
     geom_text(x = 24896, y = -4.5, label = "chr1", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 49116,linetype = "dashed",size = 0.3)+
      geom_text(x = 49116, y = -4.5, label = "chr2", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 68946,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 68946,linetype = "dashed",size = 0.3)+
      geom_text(x = 68946, y = -4.5, label = "chr3", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 87968,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 87968,linetype = "dashed",size = 0.3)+
      geom_text(x = 87968, y = -4.5, label = "chr4", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 106122,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 106122,linetype = "dashed",size = 0.3)+
      geom_text(x = 106122, y = -4.5, label = "chr5", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 123203,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 123203,linetype = "dashed",size = 0.3)+
      geom_text(x = 123203, y = -4.5, label = "chr6", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 139138,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 139138,linetype = "dashed",size = 0.3)+
      geom_text(x = 139138, y = -4.5, label = "chr7", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 153652,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 153652,linetype = "dashed",size = 0.3)+
      geom_text(x = 153652, y = -4.5, label = "chr8", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 167492,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 167492,linetype = "dashed",size = 0.3)+
      geom_text(x = 167492, y = -4.5, label = "chr9", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 180872,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 180872,linetype = "dashed",size = 0.3)+
      geom_text(x = 180872, y = -4.5, label = "chr10", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 194381,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 194381,linetype = "dashed",size = 0.3)+
      geom_text(x = 194381, y = -4.5, label = "chr11", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 207709,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 207709,linetype = "dashed",size = 0.3)+
      geom_text(x = 207709, y = -4.5, label = "chr12", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 219146,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 219146,linetype = "dashed",size = 0.3)+
      geom_text(x = 219146, y = -4.5, label = "chr13", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 229851,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 229851,linetype = "dashed",size = 0.3)+
      geom_text(x = 229851, y = -4.5, label = "chr14", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 240051,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 240051,linetype = "dashed",size = 0.3)+
      geom_text(x = 240051, y = -4.5, label = "chr15", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 249085,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 249085,linetype = "dashed",size = 0.3)+
      geom_text(x = 249085, y = -4.5, label = "chr16", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 257411,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 257411,linetype = "dashed",size = 0.3)+
      geom_text(x = 257411, y = -4.5, label = "chr17", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 265449,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 265449,linetype = "dashed",size = 0.3)+
      geom_text(x = 265449, y = -4.5, label = "chr18", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 271311,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 271311,linetype = "dashed",size = 0.3)+
      geom_text(x = 271311, y = -4.5, label = "chr19", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 277756,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 277756,linetype = "dashed",size = 0.3)+
      geom_text(x = 277756, y = -4.5, label = "chr20", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 282427,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 282427,linetype = "dashed",size = 0.3)+
      geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-    #geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+    geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
      geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-     geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("Only 2 and 3 modals, all the values") #geom segment add fragile sites
+     geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("4PC equal to zero") #geom segment add fragile sites
     #if add two lines below to figure, chrx and chry will be added
         #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 #    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
