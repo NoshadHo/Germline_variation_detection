@@ -7,6 +7,8 @@ library(cluster)    # clustering algorithms
 library(factoextra) # clustering algorithms & visualization
 library(mclust)
 library(gridExtra)
+library(foreach)
+library(doParallel)
 set.seed(1024)
 
 #all the data are saved in K-means_Multimodal_fitting_data.RData, K-means data (first step) are available in Data_first.RData
@@ -158,7 +160,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 #cluster the data using multimodal fitting
   time_length = 0
   #use any dataframe with the dimentions of 300000      2 (or whatever number of tiles we have)
-  significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 4)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
+  significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 5)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
   counter = 1
   for (i in 1:dim(tile_case)[2]){
     ptm = Sys.time()
