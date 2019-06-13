@@ -41,7 +41,7 @@
     pc_variance %>% ggplot()+
       geom_point(aes(y = variance, x = 1:dim(pc_variance)[1]))+theme_minimal()
   #By looking at these values, I decided to remove three of PC's
-    num_PC = 3
+    num_PC = 2
     
 #REMOVING THE COMPONENTS FROM NORMAL DATA-------------------------------------------------------------------------------------------------------
   #first method: find eigen vslues, rotate data to that space, make the value zero, rotate back

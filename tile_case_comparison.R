@@ -157,6 +157,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #and then run this:
   right_form_of_data = as.data.frame(t(purified_tile_cov_gc_normalized))
   tile_case = right_form_of_data
+  rm(right_form_of_data,purified_tile_cov_gc_normalized,rotated_tile_cov_gc_normalized)
   #FITTING FOR ALL THE SAMPLES
   #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
   #cluster the data using multimodal fitting
@@ -175,13 +176,10 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   significant_tiles = as.data.frame(do.call(rbind,significant_tiles))
   #add column names
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num', 'min_clust_size')
-  #only keep the rows that has been filled up
-  #significant_tiles = significant_tiles %>% slice(1:counter-1)
-  significant_tiles = significant_tiles[1:counter-1,]
   #have a back up after a time-consuming loop
   significant_tiles_backup = significant_tiles
   #look at the pvalues histogram
-  significant_tiles %>% ggplot(aes(x = loglik))+
+  significant_tiles %>% ggplot(aes(x = min_clust_size))+
     geom_density() + 
     xlim(-20,500)+ggtitle("loglik after GC correction")
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
@@ -299,7 +297,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
      geom_text(x = 282427, y = -4.5, label = "chr21", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
     geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
      geom_text(x = 287509, y = -4.5, label = "chr22", size = 4, angle = 90, vjust = -0.4, hjust= 0,aes(na.rm = TRUE))+
-     geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("4PC equal to zero") #geom segment add fragile sites
+     geom_segment(aes(x=s_positions$pos,xend=e_positions$pos,y=0,yend=0))+ggtitle("3PC equal to zero") #geom segment add fragile sites
     #if add two lines below to figure, chrx and chry will be added
         #    +geom_vline(xintercept = 303114,linetype = "dashed",size = 0.1)+ geom_text(x = 303114, y = 0, label = "chrX", size = 4, angle = 90, vjust = -0.4, hjust= 0)
 #    +geom_vline(xintercept = 308837,linetype = "dashed",size = 0.1)+ geom_text(x = 308837, y = 0, label = "chrY", size = 4, angle = 90, vjust = -0.4, hjust= 0)
