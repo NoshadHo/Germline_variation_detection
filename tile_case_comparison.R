@@ -157,7 +157,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #and then run this:
   right_form_of_data = as.data.frame(t(purified_tile_cov_gc_normalized))
   tile_case = right_form_of_data
-  rm(right_form_of_data,purified_tile_cov_gc_normalized,rotated_tile_cov_gc_normalized)
+  rm(right_form_of_data,purified_tile_cov_gc_normalized,rotated_tile_cov_gc_normalized, eigen_vectors)
   #FITTING FOR ALL THE SAMPLES
   #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
   #cluster the data using multimodal fitting
@@ -165,7 +165,6 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   significant_tiles = foreach(i = 1:dim(tile_case)[2]) %dopar% {
     if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
       try({k = Mclust(tile_case[,i],verbose = FALSE)})
-      tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$classification)
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
         (c(i,k$loglik, k$bic, length(unique(k$classification)), min(table(k$classification))))
@@ -177,9 +176,9 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #add column names
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num', 'min_clust_size')
   #have a back up after a time-consuming loop
-  significant_tiles_backup = significant_tiles
+  significant_tiles_1pc = significant_tiles
   #look at the pvalues histogram
-  significant_tiles %>% ggplot(aes(x = min_clust_size))+
+  significant_tiles %>% ggplot(aes(x = loglik))+
     geom_density() + 
     xlim(-20,500)+ggtitle("loglik after GC correction")
   #look at the position of tiles in the top 1% (in terms of lowest p-value)
