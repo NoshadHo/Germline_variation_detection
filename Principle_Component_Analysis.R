@@ -45,9 +45,10 @@
     
 #REMOVING THE COMPONENTS FROM NORMAL DATA-------------------------------------------------------------------------------------------------------
   #first method: find eigen vslues, rotate data to that space, make the value zero, rotate back
-    eigen_vectors = eigen(cov(tile_cov_gc_normalized))$vectors
+    #eigen_vectors = eigen(cov(tile_cov_gc_normalized))$vectors
+    eigen_vectors = prcomp(tile_cov_gc_normalized, center = TRUE)$rotation
     rotated_tile_cov_gc_normalized = as.matrix(tile_cov_gc_normalized) %*% eigen_vectors
-    rotated_tile_cov_gc_normalized[, 1:3] <- 0
+    rotated_tile_cov_gc_normalized[, 1:num_PC] <- 0
     purified_tile_cov_gc_normalized <- rotated_tile_cov_gc_normalized %*% t(eigen_vectors) # transpose of orthogonal matrix = inverse
     
   #QC: turn the space into pc subspace and plot
