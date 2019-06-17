@@ -137,7 +137,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,80])
+  tile1 = as.data.frame(tile_case[,74014])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5
@@ -175,8 +175,9 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   significant_tiles = as.data.frame(do.call(rbind,significant_tiles))
   #add column names
   colnames(significant_tiles) = c('tile', 'loglik', "bic", 'modal_num', 'min_clust_size')
+  dim(significant_tiles)
   #have a back up after a time-consuming loop
-  significant_tiles_1pc = significant_tiles
+  significant_tiles_2to4pc = significant_tiles
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = loglik))+
     geom_density() + 

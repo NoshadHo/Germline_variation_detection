@@ -29,10 +29,10 @@
 
 #TILES_PCA PLOT---------------------------------------------------------------------------------------------------------------------------------
   #PLOTING TILES PCA USING GC-NORMALIZED COVERAGE DATA FOR NORMAL PATIENTS
-    autoplot(prcomp((tile_cov_gc_normalized)), loadings = FALSE)+theme_minimal()
+    autoplot(prcomp(t(tile_cov_gc_normalized)), loadings = FALSE)+theme_minimal()
   #analysi the PC information
-    pca_data = prcomp((tile_cov_gc_normalized))
-    pc_variance = as.data.frame((pca_data$sdev)^2/sum((pca_data$sdev)^2))
+    pca_data = prcomp(t(tile_cov_gc_normalized))
+    0 = as.data.frame((pca_data$sdev)^2/sum((pca_data$sdev)^2))
     pc_cummulative_variation = cumsum(pc_variations)
     pc_variance = pc_variance %>% mutate(cumsum = pc_cummulative_variation$pc_variance)
     colnames(pc_variance) = c("variance", "cum_variance")
@@ -41,7 +41,7 @@
     pc_variance %>% ggplot()+
       geom_point(aes(y = variance, x = 1:dim(pc_variance)[1]))+theme_minimal()
   #By looking at these values, I decided to remove three of PC's
-    num_PC = 3
+    num_PC =4
     
 #REMOVING THE COMPONENTS FROM NORMAL DATA-------------------------------------------------------------------------------------------------------
   #first method: find eigen vslues, rotate data to that space, make the value zero, rotate back
@@ -56,12 +56,39 @@
     #analysing column changes from pc1:3 removed compare to pc1:4 removed (expect to be pseudo uniformily)
     col_sum3 = as.data.frame(purified_tile_cov_gc_normalized) %>% summarise_all(funs(sum))  #sum of columns #change num_pc to 4 and try again for col_sum3
     col_changes34 = abs(col_sum3) - abs(col_sum4)                                           #sum of changes from removing pc4 from pc3removed case
-    ggplot() + geom_point(aes(x = 1:dim(col_changes34)[2],y = t(col_changes34)))
+    ggplot() + geom_point(aes(x = 1:dim(col_changes34)[2],y = t(col_changes34)))+theme_minimal()
     #analysing row changes from pc1:3 removed compare to pc1:4 removed (expect to be non-uniformly)
     row_sum3 = rowSums(x = purified_tile_cov_gc_normalized, dims = 1)
-    row_changes34 = abs(row_sum3) - abs(row_sum4) 
-    ggplot() + geom_point(aes(x = 1:length(row_changes34),y = (row_changes34)))+theme_minimal()+ylim(0,1)
+    row_changes34 = abs(row_sum2) - abs(row_sum3) 
+    ggplot() + geom_point(aes(x = 1:length(row_changes34),y = (row_changes34)))+theme_minimal()+ggtitle("2 to 3")
   #QC: turn the space into pc subspace and plot
     QC_matrix = as.matrix(purified_tile_cov_gc_normalized) %*% eigen_vectors
     ggplot()+geom_point(aes(x = QC_matrix[,1], y = QC_matrix[,2]))
   #second method: map unto the subplane spaned by those PC's, map each vector onto that subplane, remove the values from the vector
+    
+    
+####SVD----------------------------------------------------------------------------------------------------------------------------------------
+    #our matrix should have 110 rows (we want each point to be a patient and not a tile)
+    svd = svd(tile_cov_gc_normalized)
+    #scree plot
+    as.data.frame(svd$d) %>% ggplot()+
+      geom_point(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+
+      geom_point(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))+geom_line(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))
+    #we choose the number of sc to be deleted
+    sc_num = 3
+    
+    svd$d[1:sc_num] = 0
+    svd$d = diag(svd$d)
+    purified_tile_cov_gc_normalized = svd$u %*% tcrossprod(svd$d,svd$v)
+    
+#look at the distribution of data before and after normalization
+    plotDist = function(data, sample){ #it should have 110 row and ...
+      row = as.data.frame((data[sample,]))
+      colnames(row) = "val"
+      #row =row %>% filter(val < 1 & val > -1)
+      ggplot()+
+        geom_point(aes(x = 1:dim(row)[1],y = row$val),size = 0.3)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+        geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(-100,100)
+    }
+    plotDist(t(purified_tile_cov_gc_normalized),sample)
+    
