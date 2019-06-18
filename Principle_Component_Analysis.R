@@ -27,6 +27,7 @@
   #Data load: #we will use data loaded in tiles_Correlation_Analysis
     base::load('/home/noshadh/Codes/Germline_variation_detection/K-means_Multimodal_fitting_data_gcNormlized.RData')
 
+
 #TILES_PCA PLOT---------------------------------------------------------------------------------------------------------------------------------
   #PLOTING TILES PCA USING GC-NORMALIZED COVERAGE DATA FOR NORMAL PATIENTS
     autoplot(prcomp(t(tile_cov_gc_normalized)), loadings = FALSE)+theme_minimal()
@@ -69,13 +70,13 @@
     
 ####SVD----------------------------------------------------------------------------------------------------------------------------------------
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
-    svd = svd(tile_cov_gc_normalized)
+    svd = svd(sex_removed_tile_cov_gc)
     #scree plot
     as.data.frame(svd$d) %>% ggplot()+
       geom_point(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+
       geom_point(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))+geom_line(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))
     #we choose the number of sc to be deleted
-    sc_num = 3
+    sc_num = 6
     
     svd$d[1:sc_num] = 0
     svd$d = diag(svd$d)
@@ -85,10 +86,15 @@
     plotDist = function(data, sample){ #it should have 110 row and ...
       row = as.data.frame((data[sample,]))
       colnames(row) = "val"
-      #row =row %>% filter(val < 1 & val > -1)
+      row =row %>% filter(val < 1 & val > -1)
       ggplot()+
         geom_point(aes(x = 1:dim(row)[1],y = row$val),size = 0.3)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
-        geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(-100,100)
+        geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)
+        #+ylim(-100,100)
     }
     plotDist(t(purified_tile_cov_gc_normalized),sample)
+    
+    
+#remove sex chromosomes:
+    sex_removed_tile_cov_gc = tile_cov_gc_normalized[1:287509,]
     
