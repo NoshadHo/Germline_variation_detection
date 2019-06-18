@@ -48,6 +48,28 @@ variance_sex = function(data, sex){ #data here is tile_coverage matrix, with 110
   return(variance_df)
 }
 
+variance_df = variance_sex(as.data.frame(t(sex_removed_tile_cov_gc)),"m")
+variance_df_0 = variance_df
+ggplot()+geom_point(aes(x = 1:dim(variance_df_1)[1],y = variance_df$V1),size = 0.4)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+  geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,2)+
+  labs(title = paste("PC removed",sc_num),x = "Genome tiles", y = "Variance")
 
-ggplot()+geom_point(aes(x = 1:308837,y = a$V1),size = 0.4)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
-  geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)
+#LOOK AT THE DIFFERENCE OF VARIANCE EACH STEP OF PC REMOVAL--------------------------------------------------------------------------------------
+  variance_diff_0_1 = variance_df_0 - variance_df_1
+  variance_diff_1_2 = variance_df_1 - variance_df_2
+  variance_diff_2_3 = variance_df_2 - variance_df_3
+  variance_diff_3_4 = variance_df_3 - variance_df_4
+  variance_diff_4_5 = variance_df_4 - variance_df_5
+  variance_diff_5_6 = variance_df_5 - variance_df_6
+  
+  TILES_NUMBER = 50
+  ggplot()+geom_point(aes(x = 1:TILES_NUMBER,y = (variance_diff_0_1 %>% arrange(desc(V1)))[1:TILES_NUMBER,]),size = 0.7)+
+    theme_minimal()+
+    labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
+  
+  TILES_NUMBER = 120
+  end = dim(variance_diff_0_1)[1]
+  ggplot()+geom_point(aes(x = end:(end-TILES_NUMBER),y = (variance_diff_0_1 %>% arrange(desc(V1)))[end:(end-TILES_NUMBER),]),size = 0.7)+
+    theme_minimal()+
+    labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
+    
