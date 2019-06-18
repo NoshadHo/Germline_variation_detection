@@ -48,9 +48,10 @@ variance_sex = function(data, sex){ #data here is tile_coverage matrix, with 110
   return(variance_df)
 }
 
-variance_df = variance_sex(as.data.frame(t(sex_removed_tile_cov_gc)),"m")
-variance_df_0 = variance_df
-ggplot()+geom_point(aes(x = 1:dim(variance_df_1)[1],y = variance_df$V1),size = 0.4)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+variance_df = variance_sex(as.data.frame(t(sex_removed_tile_cov_gc_blacklist)),"m")
+variance_df = variance_df %>% dplyr::mutate(tile = blacklist_removed_tile_list$tile)
+variance_df_bl_6 = variance_df
+ggplot()+geom_point(aes(x = variance_df$tile,y = variance_df$V1),size = 0.4)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
   geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,2)+
   labs(title = paste("PC removed",sc_num),x = "Genome tiles", y = "Variance")
 
@@ -61,9 +62,10 @@ ggplot()+geom_point(aes(x = 1:dim(variance_df_1)[1],y = variance_df$V1),size = 0
   variance_diff_3_4 = variance_df_3 - variance_df_4
   variance_diff_4_5 = variance_df_4 - variance_df_5
   variance_diff_5_6 = variance_df_5 - variance_df_6
+
   
   TILES_NUMBER = 50
-  ggplot()+geom_point(aes(x = 1:TILES_NUMBER,y = (variance_diff_0_1 %>% arrange(desc(V1)))[1:TILES_NUMBER,]),size = 0.7)+
+  ggplot()+geom_point(aes(x = 1:TILES_NUMBER,y = (variance_diff_bl_0_1 %>% arrange(desc(V1)))[1:TILES_NUMBER,]),size = 0.7)+
     theme_minimal()+
     labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
   
@@ -73,7 +75,24 @@ ggplot()+geom_point(aes(x = 1:dim(variance_df_1)[1],y = variance_df$V1),size = 0
     theme_minimal()+
     labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
   #results of this part can be find in "Principal Component noise reduction results" google sheet
-
+  # for blacklist
+  variance_diff_bl_0_1$V1 = variance_df_bl_0$V1 - variance_df_bl_1$V1
+  variance_diff_bl_1_2$V1 = variance_df_bl_1$V1 - variance_df_bl_2$V1
+  variance_diff_bl_2_3$V1 = variance_df_bl_2$V1 - variance_df_bl_3$V1
+  variance_diff_bl_3_4$V1 = variance_df_bl_3$V1 - variance_df_bl_4$V1
+  variance_diff_bl_4_5$V1 = variance_df_bl_4$V1 - variance_df_bl_5$V1
+  variance_diff_bl_5_6$V1 = variance_df_bl_5$V1 - variance_df_bl_6$V1
+  TILES_NUMBER = 50
+  ggplot()+geom_point(aes(x = 1:TILES_NUMBER,y = (variance_diff_bl_0_1 %>% arrange(desc(V1)))[1:TILES_NUMBER,]),size = 0.7)+
+    theme_minimal()+
+    labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
+  
+  TILES_NUMBER = 120
+  end = dim(variance_diff_0_1)[1]
+  ggplot()+geom_point(aes(x = end:(end-TILES_NUMBER),y = (variance_diff_0_1 %>% arrange(desc(V1)))[end:(end-TILES_NUMBER),]),size = 0.7)+
+    theme_minimal()+
+    labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
+  #
 #FIND THE TILES, AND THEN ANNOTATE THEM, SEE IF WE CAN MAKE ANY SENSE OF THEM--------------------------------------------------------------------
   #set the values selected in the last part:
   TOP_0_1 = 17
