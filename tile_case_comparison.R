@@ -13,6 +13,16 @@ set.seed(1024)
 numCores = detectCores()
 registerDoParallel(numCores-1)
 
+
+#DETECTING SEX OF PATIENT----------------------------------------------------------------------------------------------------------------------
+detect.sex <- function(var, tile) {
+  sel <- var$n.GT %in% c("0/1", "1/0") & var$n.DP>16
+  chrx.snp <- length(var[sel & seqnames(var)=="chrX"])
+  chr2.snp <- length(var[sel & seqnames(var)=="chr2"])
+  sex.snp <-  if (chrx.snp / chr2.snp > 0.25) "female" else "male"
+  return(sex.snp)
+}
+
 #all the data are saved in K-means_Multimodal_fitting_data.RData, K-means data (first step) are available in Data_first.RData
 ##READ THE FILES-------------------------------------------------------------------------------------------------------------
 #set the file directories
@@ -22,13 +32,17 @@ files = list.files()
 #results file
 tile_case = list()
 colnames_list = ""
+sex = as.data.frame(matrix(ncol = 2,nrow = length(files)))
+colnames(sex) = c("patient_ID", "Sex")
 #reading each file, process it, save the n.cov information, delete the file
 #here we use list, to improve the performance and get results faster
-for (file_num in 1:length(files)-1){
-  file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))
-  tiles = as.data.frame(file$tile)
-  tile_case[file_num] = tiles %>% select(n.cov)
-  colnames_list[file_num] = files[file_num]
+for (file_num in 1:(length(files))){ #can be potentially multithreat
+  file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+  #tiles = as.data.frame(file$tile)
+  #tile_case[file_num] = tiles %>% select(n.cov)
+  #colnames_list[file_num] = files[file_num]
+  sex[file_num,1] = file_num
+  sex[file_num,2] = detect.sex(file$var,file$tile)
   print(paste("File processed: ",file_num,"/",length(files),sep = ""))
 }
 #convert a list to data frame
