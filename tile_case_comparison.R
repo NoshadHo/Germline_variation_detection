@@ -30,7 +30,7 @@ setwd("/mctp/users/mcieslik/proj/study/cptac3/data/cnvex-hl5/")
 #get a list of folders
 files = list.files()
 #results file
-tile_case = list()
+tile_coverage = list()
 colnames_list = ""
 sex = as.data.frame(matrix(ncol = 2,nrow = length(files)))
 colnames(sex) = c("patient_ID", "Sex")
@@ -38,25 +38,32 @@ colnames(sex) = c("patient_ID", "Sex")
 #here we use list, to improve the performance and get results faster
 for (file_num in 1:(length(files))){ #can be potentially multithreat
   file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
-  #tiles = as.data.frame(file$tile)
-  #tile_case[file_num] = tiles %>% select(n.cov)
-  #colnames_list[file_num] = files[file_num]
+  tiles = as.data.frame(file$tile)
+  tile_coverage[file_num] = tiles %>% select(n.cov)
+  colnames_list[file_num] = files[file_num]
   sex[file_num,1] = file_num
   sex[file_num,2] = detect.sex(file$var,file$tile)
   print(paste("File processed: ",file_num,"/",length(files),sep = ""))
 }
+
 #convert a list to data frame
-tile_case = as.data.frame(matrix(unlist(tile_case),ncol = length(tile_case), byrow = FALSE))
-colnames(tile_case) = colnames_list
+tile_coverage = as.data.frame(matrix(unlist(tile_coverage),ncol = length(tile_coverage), byrow = FALSE))
+colnames(tile_coverage) = colnames_list
+
+#read the blacklist tiles from one of the RDS files:
+blacklist = as.data.frame(matrix(nrow = dim(tile_coverage)[1],ncol = 2))
+colnames(blacklist) = c("tile", "blacklist")
+blacklist$tile = 1:dim(tile_coverage[1])
+blacklist$blacklist = file$tile$blacklist
 #write the file and data frames
-write.table(tile_case, "/home/noshadh/Codes/Germline_variation_detection/Tile_case_hl5.tsv", sep = "\t", col.names = TRUE)
+write.table(tile_coverage, "/home/noshadh/Codes/Germline_variation_detection/tile_coverage_hl5.tsv", sep = "\t", col.names = TRUE)
 
 ##INITIAL ANALYSIS-------------------------------------------------------------------------------------------------------------
 #make a Hierarchical Clustering heatmap
 #the heatmap is so big, we need to look at the samll chunk of tiles
-tile_case = t(tile_case)
+tile_coverage = t(tile_coverage)
 dev.off()
-heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none")
+heatmap.2(as.matrix(t(tile_coverage[22900:23000,])),density.info="none", trace="none")
 
 ##K-MEANS METHOD---------------------------------------------------------------------------------------------------------------
 #cluster the data using kmeans for 2 clusters
@@ -65,26 +72,26 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   #use any dataframe with the dimentions of 300000      2 (or whatever number of tiles we have)
   significant_tiles = as.data.frame(matrix(data = c(0,0),nrow = 300000,ncol = 2)) #here I made a predefined data.frame to improve the performance, but it is not defined yet
   counter = 1 #counter for the output file
-  for (i in 1:dim(tile_case)[2]){
+  for (i in 1:dim(tile_coverage)[2]){
     ptm = Sys.time()
-    try({k = kmeans(tile_case[,i],centers = 2, nstart = 100)})
-    tile_case_clust = as.data.frame(tile_case[,i]) %>% mutate(cluster = k$cluster) #add corresponding clusters for each sampleto the data.frame
-    clust1 = tile_case_clust %>% filter(cluster == 1)
-    clust2 = tile_case_clust %>% filter(cluster == 2)
+    try({k = kmeans(tile_coverage[,i],centers = 2, nstart = 100)})
+    tile_coverage_clust = as.data.frame(tile_coverage[,i]) %>% mutate(cluster = k$cluster) #add corresponding clusters for each sampleto the data.frame
+    clust1 = tile_coverage_clust %>% filter(cluster == 1)
+    clust2 = tile_coverage_clust %>% filter(cluster == 2)
     stat_test = t.test(clust1,clust2,var.equal = FALSE, paired = FALSE) #find the significance
     if (stat_test$p.value < 0.000001){ #select only significant ones
       significant_tiles[counter,] = c(i,stat_test$p.value)
       counter = counter+1
     }
-    time_length = 0.3*(time_length) + 0.7*((Sys.time() - ptm) * (dim(tile_case)[2] - i)/60) #estimate the remainig time, FUN :))
-    print(paste("Tile processed: ",i,"/",dim(tile_case)[2],"------- Time remaining:",time_length,sep = ""))
+    time_length = 0.3*(time_length) + 0.7*((Sys.time() - ptm) * (dim(tile_coverage)[2] - i)/60) #estimate the remainig time, FUN :))
+    print(paste("Tile processed: ",i,"/",dim(tile_coverage)[2],"------- Time remaining:",time_length,sep = ""))
   }
   #add column names to data.frame
   colnames(significant_tiles) = c('tile', 'pvalue')
   #only keep the rows that has been filled up
   significant_tiles = significant_tiles %>% slice(1:counter)
   #Optional analysis that can be used for each tile (quality control)
-  tile_case_clust %>% ggplot(aes(x = `tile_case[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
+  tile_coverage_clust %>% ggplot(aes(x = `tile_coverage[, i]`, y = cluster))+geom_point()  #look at the position of points in clusters
   
   #look at the pvalues histogram
   significant_tiles %>% ggplot(aes(x = log10(pvalue)))+
@@ -151,7 +158,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_case[,74014])
+  tile1 = as.data.frame(tile_coverage[,74014])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5
@@ -166,19 +173,19 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
 
   tile1 %>% ggplot(aes(x = coverage, fill = cluster))+geom_density(alpha = 0.4)+theme_minimal() #look at the distribution of coverage in a specific tile for each modal
 ###########################
-#if you want to try some other dataset instead of tile_case, do this:
+#if you want to try some other dataset instead of tile_coverage, do this:
   #-it should be in the form of row:variables(features) col:tiles or samples
   #and then run this:
   right_form_of_data = as.data.frame(t(purified_tile_cov_gc_normalized))
-  tile_case = right_form_of_data
+  tile_coverage = right_form_of_data
   rm(right_form_of_data,purified_tile_cov_gc_normalized,rotated_tile_cov_gc_normalized, eigen_vectors)
   #FITTING FOR ALL THE SAMPLES
   #interesting how results of this part, are tiles close to each other, that kindda match with hypothesis, take a look at their positions :)
   #cluster the data using multimodal fitting
   PTIME = system.time({
-  significant_tiles = foreach(i = 1:dim(tile_case)[2]) %dopar% {
-    if (sum(tile_case[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
-      try({k = Mclust(tile_case[,i],verbose = FALSE)})
+  significant_tiles = foreach(i = 1:dim(tile_coverage)[2]) %dopar% {
+    if (sum(tile_coverage[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
+      try({k = Mclust(tile_coverage[,i],verbose = FALSE)})
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
         (c(i,k$loglik, k$bic, length(unique(k$classification)), min(table(k$classification))))
@@ -205,7 +212,7 @@ heatmap.2(as.matrix(t(tile_case[22900:23000,])),density.info="none", trace="none
   write.table(significant_tiles, "/home/noshadh/Codes/Germline_variation_detection/Selected_volatile_tiles.tsv", sep = "\t", col.names = TRUE)
     
 #GET READY FOR MULTIMODAL PLOT AND THEN PLOTING ---------------------------------------------------------------------------
-#make a general data.frame-join information we have, list of selected tiles, with their information on tile_case data.frame
+#make a general data.frame-join information we have, list of selected tiles, with their information on tile_coverage data.frame
   
   #look at the position of results in genome
   #make a data frame of all the tile positions: #here we choose one of the files (original files containing Rds info, cnvex output)
