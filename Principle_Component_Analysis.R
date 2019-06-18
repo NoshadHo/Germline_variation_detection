@@ -71,6 +71,13 @@
 ####SVD----------------------------------------------------------------------------------------------------------------------------------------
     #remove sex chromosomes:
     sex_removed_tile_cov_gc = tile_cov_gc_normalized[1:287509,]
+    sex_removed_tile_cov_gc = sex_removed_tile_cov_gc %>% mutate(blacklist = blacklist$blacklist[1:287509])
+    sex_removed_tile_cov_gc = sex_removed_tile_cov_gc %>% mutate(tile = row_number()) #to keep track of what tiles will remain
+    sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc %>% filter(blacklist  == 0)
+    sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-blacklist)
+    blacklist_removed_tile_list = sex_removed_tile_cov_gc_blacklist %>% select(tile)
+    sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-tile)
+    
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
     svd = svd(sex_removed_tile_cov_gc)
     #scree plot
