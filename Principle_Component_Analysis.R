@@ -33,8 +33,8 @@
     autoplot(prcomp(t(tile_cov_gc_normalized)), loadings = FALSE)+theme_minimal()
   #analysi the PC information
     pca_data = prcomp(t(tile_cov_gc_normalized))
-    0 = as.data.frame((pca_data$sdev)^2/sum((pca_data$sdev)^2))
-    pc_cummulative_variation = cumsum(pc_variations)
+    pc_variance = as.data.frame((pca_data$sdev)^2/sum((pca_data$sdev)^2))
+    pc_cummulative_variation = cumsum(pc_variance)
     pc_variance = pc_variance %>% mutate(cumsum = pc_cummulative_variation$pc_variance)
     colnames(pc_variance) = c("variance", "cum_variance")
     rm(pc_cummulative_variation)
@@ -69,14 +69,15 @@
     
     
 ####SVD----------------------------------------------------------------------------------------------------------------------------------------
+    #remove sex chromosomes:
+    sex_removed_tile_cov_gc = tile_cov_gc_normalized[1:287509,]
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
     svd = svd(sex_removed_tile_cov_gc)
     #scree plot
     as.data.frame(svd$d) %>% ggplot()+
-      geom_point(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:dim(pc_variance)[1]))+
-      geom_point(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))+geom_line(aes(y = svd2$d, x = 1:dim(pc_variance)[1]))
+      geom_point(aes(y = svd$d, x = 1:length(svd$d)))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:length(svd$d)))
     #we choose the number of sc to be deleted
-    sc_num = 6
+    sc_num = 4
     
     svd$d[1:sc_num] = 0
     svd$d = diag(svd$d)
@@ -95,6 +96,5 @@
     plotDist(t(purified_tile_cov_gc_normalized),sample)
     
     
-#remove sex chromosomes:
-    sex_removed_tile_cov_gc = tile_cov_gc_normalized[1:287509,]
+
     

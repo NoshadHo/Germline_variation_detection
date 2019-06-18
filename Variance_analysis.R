@@ -72,4 +72,47 @@ ggplot()+geom_point(aes(x = 1:dim(variance_df_1)[1],y = variance_df$V1),size = 0
   ggplot()+geom_point(aes(x = end:(end-TILES_NUMBER),y = (variance_diff_0_1 %>% arrange(desc(V1)))[end:(end-TILES_NUMBER),]),size = 0.7)+
     theme_minimal()+
     labs(title = "0-1 difference",x = "Genome tiles", y = "Variance")
-    
+  #results of this part can be find in "Principal Component noise reduction results" google sheet
+
+#FIND THE TILES, AND THEN ANNOTATE THEM, SEE IF WE CAN MAKE ANY SENSE OF THEM--------------------------------------------------------------------
+  #set the values selected in the last part:
+  TOP_0_1 = 17
+  END_0_1 = 10
+  TOP_1_2 = 18
+  TOP_2_3 = 17
+  TOP_3_4 = 20
+  TOP_4_5 = 20
+  TOP_5_6 = 8
+  
+  #add tile id as a column to datasets
+  variance_diff_0_1 = variance_diff_0_1 %>% mutate(row_number())
+  variance_diff_1_2 = variance_diff_1_2 %>% mutate(row_number())
+  variance_diff_2_3 = variance_diff_2_3 %>% mutate(row_number())
+  variance_diff_3_4 = variance_diff_3_4 %>% mutate(row_number())
+  variance_diff_4_5 = variance_diff_4_5 %>% mutate(row_number())
+  variance_diff_5_6 = variance_diff_5_6 %>% mutate(row_number())
+  #select the number of tiles:
+  variant_tiles_0_1 = variance_diff_0_1 %>% arrange(desc(V1)) %>% slice(1:TOP_0_1)
+  variant_tiles_1_2 = variance_diff_1_2 %>% arrange(desc(V1)) %>% slice(1:TOP_1_2)
+  variant_tiles_2_3 = variance_diff_2_3 %>% arrange(desc(V1)) %>% slice(1:TOP_2_3)
+  variant_tiles_3_4 = variance_diff_3_4 %>% arrange(desc(V1)) %>% slice(1:TOP_3_4)
+  variant_tiles_4_5 = variance_diff_4_5 %>% arrange(desc(V1)) %>% slice(1:TOP_4_5)
+  variant_tiles_5_6 = variance_diff_5_6 %>% arrange(desc(V1)) %>% slice(1:TOP_5_6)
+  variant_tiles_0_1_end = variance_diff_0_1 %>% arrange(V1) %>% slice(1:END_0_1)
+  colnames(variant_tiles_0_1) = c("var_diff", "tile")
+  colnames(variant_tiles_1_2) = c("var_diff", "tile")
+  colnames(variant_tiles_2_3) = c("var_diff", "tile")
+  colnames(variant_tiles_3_4) = c("var_diff", "tile")
+  colnames(variant_tiles_4_5) = c("var_diff", "tile")
+  colnames(variant_tiles_5_6) = c("var_diff", "tile")
+  colnames(variant_tiles_0_1_end) = c("var_diff", "tile")
+  #this is how I looked at the reagions selected:
+  #variant_tiles_4_5 %>% arrange(tile)
+  
+  t1 = intersect(variant_tiles_0_1$tile, variant_tiles_1_2$tile)
+  t2 = intersect(t1, variant_tiles_2_3$tile)
+  t3 = intersect(t2, variant_tiles_3_4$tile)
+  t4 = intersect(t3, variant_tiles_4_5$tile)
+  t5 = intersect(t4, variant_tiles_5_6$tile)
+  
+  
