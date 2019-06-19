@@ -30,7 +30,7 @@
 
 #TILES_PCA PLOT---------------------------------------------------------------------------------------------------------------------------------
   #PLOTING TILES PCA USING GC-NORMALIZED COVERAGE DATA FOR NORMAL PATIENTS
-    autoplot(prcomp(t(tile_cov_gc_normalized)), loadings = FALSE)+theme_minimal()
+    autoplot(prcomp(t(sex_removed_tile_cov_gc_blacklist)), loadings = FALSE)+theme_minimal()
   #analysi the PC information
     pca_data = prcomp(t(tile_cov_gc_normalized))
     pc_variance = as.data.frame((pca_data$sdev)^2/sum((pca_data$sdev)^2))
@@ -47,7 +47,7 @@
 #REMOVING THE COMPONENTS FROM NORMAL DATA-------------------------------------------------------------------------------------------------------
   #first method: find eigen vslues, rotate data to that space, make the value zero, rotate back
     #eigen_vectors = eigen(cov(tile_cov_gc_normalized))$vectors
-    eigen_vectors = prcomp(tile_cov_gc_normalized, center = TRUE)$rotation
+    eigen_vectors = prcomp(t(tile_cov_gc_normalized), center = TRUE)$rotation
     rotated_tile_cov_gc_normalized = as.matrix(tile_cov_gc_normalized) %*% eigen_vectors
     rotated_tile_cov_gc_normalized[, 1:num_PC] = 0
     purified_tile_cov_gc_normalized = rotated_tile_cov_gc_normalized %*% t(eigen_vectors) # transpose of orthogonal matrix = inverse
@@ -63,7 +63,7 @@
     row_changes34 = abs(row_sum2) - abs(row_sum3) 
     ggplot() + geom_point(aes(x = 1:length(row_changes34),y = (row_changes34)))+theme_minimal()+ggtitle("2 to 3")
   #QC: turn the space into pc subspace and plot
-    QC_matrix = as.matrix(purified_tile_cov_gc_normalized) %*% eigen_vectors
+    QC_matrix = as.matrix(t(tile_cov_gc_normalized)) %*% eigen_vectors #rotate it to the pca components
     ggplot()+geom_point(aes(x = QC_matrix[,1], y = QC_matrix[,2]))
   #second method: map unto the subplane spaned by those PC's, map each vector onto that subplane, remove the values from the vector
     
@@ -76,6 +76,7 @@
     sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc %>% filter(blacklist  == 0)
     sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-blacklist)
     blacklist_removed_tile_list = sex_removed_tile_cov_gc_blacklist %>% select(tile)
+    blacklist_removed_tile_list = blacklist_removed_tile_list %>% mutate(new_row = row_number())
     sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-tile)
     
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
@@ -84,24 +85,28 @@
     as.data.frame(svd$d) %>% ggplot()+
       geom_point(aes(y = svd$d, x = 1:length(svd$d)))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:length(svd$d)))
     #we choose the number of sc to be deleted
-    sc_num = 1
+    sc_num = 6
     
     svd$d[1:sc_num] = 0
     svd$d = diag(svd$d)
     purified_tile_cov_gc_normalized = svd$u %*% tcrossprod(svd$d,svd$v)
     
 #look at the distribution of data before and after normalization
-    plotDist = function(data, sample){ #it should have 110 row and ...
-      row = as.data.frame((data[sample,]))
+    plotDist = function(data, sample,start = 1,end = 308837){ #it should have 110 row and ...
+      temp = as.data.frame((data[sample,])) %>% mutate(gr = 0) #we use this to just show the selected region on plot
+      temp$gr[14320:14327] = 1
+      row = as.data.frame((data[sample,start:end]))
       colnames(row) = "val"
-      row =row %>% filter(val < 1 & val > -1)
-      ggplot()+
-        geom_point(aes(x = 1:dim(row)[1],y = row$val),size = 0.3)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
-        geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)
-        #+ylim(-100,100)
+      
+      #row =row %>% filter(val < 1 & val > -1)
+      ggplot()+geom_point(aes(x = 1:dim(row)[1],y = row$val,color = as.factor(temp[start:end,]$gr)),size = 0.8)+theme_minimal()
+        #geom_point(aes(x = 1:dim(row)[1],y = row$val),size = 0.3)+theme_minimal()+ylim(0,10)
+        #+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
+        #geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,100)
     }
-    plotDist(t(purified_tile_cov_gc_normalized),sample)
+    plotDist(t(tile_cov_gc_normalized),sample,12509,24896)
     
     
-
-    
+#LOOK AT ONE CHROMOSOME LIKE THE THING WE HAVE ABOVE
+    #chr1 long arm is from 12509 to 24896
+    #chr21: short arm is from tile 277757 to 278857
