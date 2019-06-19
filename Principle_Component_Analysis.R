@@ -47,7 +47,7 @@
 #REMOVING THE COMPONENTS FROM NORMAL DATA-------------------------------------------------------------------------------------------------------
   #first method: find eigen vslues, rotate data to that space, make the value zero, rotate back
     #eigen_vectors = eigen(cov(tile_cov_gc_normalized))$vectors
-    eigen_vectors = prcomp(t(tile_cov_gc_normalized), center = TRUE)$rotation
+    eigen_vectors = prcomp(t(sex_removed_tile_cov_gc_blacklist), center = TRUE)$rotation
     rotated_tile_cov_gc_normalized = as.matrix(tile_cov_gc_normalized) %*% eigen_vectors
     rotated_tile_cov_gc_normalized[, 1:num_PC] = 0
     purified_tile_cov_gc_normalized = rotated_tile_cov_gc_normalized %*% t(eigen_vectors) # transpose of orthogonal matrix = inverse
@@ -63,8 +63,8 @@
     row_changes34 = abs(row_sum2) - abs(row_sum3) 
     ggplot() + geom_point(aes(x = 1:length(row_changes34),y = (row_changes34)))+theme_minimal()+ggtitle("2 to 3")
   #QC: turn the space into pc subspace and plot
-    QC_matrix = as.matrix(t(tile_cov_gc_normalized)) %*% eigen_vectors #rotate it to the pca components
-    ggplot()+geom_point(aes(x = QC_matrix[,1], y = QC_matrix[,2]))
+    QC_matrix = as.matrix(t(sex_removed_tile_cov_gc_blacklist)) %*% eigen_vectors #rotate it to the pca components
+    ggplot()+geom_point(aes(x = QC_matrix[,5], y = QC_matrix[,4]))
   #second method: map unto the subplane spaned by those PC's, map each vector onto that subplane, remove the values from the vector
     
     
