@@ -93,7 +93,7 @@
     as.data.frame(svd$d) %>% ggplot()+
       geom_point(aes(y = svd$d, x = 1:length(svd$d)))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:length(svd$d)))
     #we choose the number of sc to be deleted
-    sc_num = 15
+    sc_num = 8
     
     svd$d[1:sc_num] = 0
     svd$d = diag(svd$d)
@@ -114,7 +114,6 @@
         #+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
         #geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,100)
     }
-    plotDist(t(tile_cov_gc_normalized),65,257412,259262)
     
     plotDistPure = function(data, sample,start = 1,end = 308837){ #it should have 110 row and ...
       #temp = as.data.frame((data[sample,])) %>% mutate(gr = 0) #we use this to just show the selected region on plot
@@ -129,7 +128,9 @@
       #+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
       #geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,100)
     }
-    plotDistPure(t(purified_tile_cov_gc_normalized),sample,24897,31804)
+    
+    plotDist(t(tile_cov_gc_normalized),65,1,12341)
+    plotDistPure(t(purified_tile_cov_gc_normalized),sample,1,31804)
       
     
   #LOOK AT ONE CHROMOSOME LIKE THE THING WE HAVE ABOVE
@@ -144,4 +145,5 @@
     #file$tile[14324]
     #temp = (as.data.frame(file$tile)) %>% mutate(tile = row_number())
     #(temp %>% group_by(arm) %>% slice(1))[35:38,]
+    #blacklist_removed_tile_list %>% filter(tile >= 12341) %>% slice(1)
     
