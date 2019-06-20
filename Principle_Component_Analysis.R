@@ -64,7 +64,7 @@
     ggplot() + geom_point(aes(x = 1:length(row_changes34),y = (row_changes34)))+theme_minimal()+ggtitle("2 to 3")
   #QC: turn the space into pc subspace and plot
     QC_matrix = as.matrix(t(sex_removed_tile_cov_gc_blacklist)) %*% eigen_vectors #rotate it to the pca components
-    ggplot()+geom_point(aes(x = QC_matrix[,5], y = QC_matrix[,4]))
+    ggplot()+geom_point(aes(x = QC_matrix[,1], y = QC_matrix[,5]))
   #second method: map unto the subplane spaned by those PC's, map each vector onto that subplane, remove the values from the vector
     
     
@@ -79,6 +79,13 @@
     blacklist_removed_tile_list = blacklist_removed_tile_list %>% mutate(new_row = row_number())
     sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-tile)
     
+    #ADDING NEW BLACKLIST MASK (THESE ARE THE REGIONS SELECTED BY VARIANCE ANALYSIS, THE REGIONS PC'S EFFECT THE MOST)
+    sex_removed_tile_cov_gc_blacklist_newMask = (sex_removed_tile_cov_gc_blacklist %>% mutate(orginal_row = blacklist_removed_tile_list$tile)) #first add the ORIGINAL ROW's to the matrix
+    #now remove the tiles(rows) we want to be removed
+    NEW_MASK = c(14320:14327,278577:278603,28188,96148,267422)  #it has the tile numbers
+    sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% filter(!(orginal_row %in% NEW_MASK))
+    blacklist_removed_tile_list_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(orginal_row)
+    sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(-orginal_row)
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
     svd = svd(sex_removed_tile_cov_gc_blacklist)
     #scree plot
@@ -99,12 +106,12 @@
       colnames(row) = "val"
       
       #row =row %>% filter(val < 1 & val > -1)
-      ggplot()+geom_point(aes(x = 1:dim(row)[1],y = row$val,color = as.factor(temp[start:end,]$gr)),size = 0.8)+theme_minimal()
+      ggplot()+geom_point(aes(x = 1:dim(row)[1],y = row$val,color = as.factor(temp[start:end,]$gr)),size = 0.8)+theme_linedraw()+ylim(0,5)
         #geom_point(aes(x = 1:dim(row)[1],y = row$val),size = 0.3)+theme_minimal()+ylim(0,10)
         #+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
         #geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,100)
     }
-    plotDist(t(tile_cov_gc_normalized),sample,12509,24896)
+    plotDist(t(tile_cov_gc_normalized),sample,12509,16509)
     
     
 #LOOK AT ONE CHROMOSOME LIKE THE THING WE HAVE ABOVE
