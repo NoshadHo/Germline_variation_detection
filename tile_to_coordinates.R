@@ -32,13 +32,22 @@ bed_to_tile = function(file_address,col_names = FALSE, RDSfile){
   tiles = as.data.frame(do.call(rbind,tiles))
   colnames(tiles) = c("start_tile","end_tiles")
   
-  return(tiles)
+  #if a region contains more than one tile, make it to a couple of entry, each containing one tile
+  more_than_one_tile = tiles %>% filter(start_tile != end_tiles)
+  tiles_single = tiles %>% anti_join(more_than_one_tile)
+  
+  tile_list = tiles_single$start_tile
+  for (i in 1:dim(more_than_one_tile)[1]){
+    tile_list = c(tile_list,(more_than_one_tile$start_tile[i]):(more_than_one_tile$end_tiles[i]))
+    print(i)
+  }
+  
+  return(tile_list)
 }
 
 file_address = "/home/noshadh/Codes/Germline_variation_detection/excluded_regions_cnvnator.bed"
 excluded_tiles_external = bed_to_tile(file_address,RDSfile = file)
 
-more_than_one_tile = excluded_tiles_external %>% filter(V1 != V2)
 new_blacklist_tiles = c(1:90,260:280,12000:12341,1278:1340,1650:1697,24841:24871,
                         22861:22865,12341:14341,16144:16148,14341:15000,
                         257422:257422,33628:33640,25072,28183,28188,
