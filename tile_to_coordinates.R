@@ -77,14 +77,15 @@ new_blacklist_tiles = c(1:90,260:280,12000:12341,1278:1340,1650:1697,24841:24871
                         232652:232752,242172:242332,253630:253760,
                         232820:232952,242902:242952,253405:253420,
                         233000:233152,243202:243732)
-blacklist_new = blacklist %>% mutate(blacklist = case_when(blacklist == 1 ~ 1,
-                                           tile %in% ext_blacklist ~ 1,
+blacklist_new = blacklist %>% mutate(blacklist = case_when(blacklist > 0 ~ 1,
+                                           tile %in% new_blacklist_tiles ~ 1,
                                            TRUE ~ 0))
 #make it sex exclusive
 blacklist_new = blacklist_new[1:287509,]
 sex_removed_tile_cov_gc = sex_removed_tile_cov_gc %>% mutate(blacklist = blacklist_new$blacklist)
+blacklist_removed_tile_list_newMask = sex_removed_tile_cov_gc %>% filter(blacklist == 0) %>% select(tile)
+blacklist_removed_tile_list_newMask = blacklist_removed_tile_list_newMask %>% mutate(new_row = row_number())
 sex_removed_tile_cov_gc_blacklist_newMask= sex_removed_tile_cov_gc %>% filter(blacklist  == 0)
-
 #in_blacklist = (blacklist_new %>% filter(blacklist > 0))$tile
 
 #length(intersect(in_blacklist,ext_blacklist))
