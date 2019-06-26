@@ -10,13 +10,15 @@ bed_to_tile_modified = function(bed_file,col_names = FALSE, RDSfile){
     colnames(bed_file) = c('chr','start','end','repeat_class')  
   }
   tiles = list()
-  for (i in 1:dim(bed_file)[1]){
-    tiles[i] = as.data.frame((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file)))
-    print(paste("Region has proccessed:",i))
+  
+  PTIME = system.time({
+    tiles = foreach(i = 1:5000) %dopar% {
+      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file))))
   }
+  })
   tiles = as.data.frame(do.call(rbind,tiles))
   colnames(tiles) = c("start_tile","end_tiles")
-  tiles = tiles %>% mutate(repeat_class = repeat_file_short$repeat_class[1:968])
+  tiles = tiles %>% mutate(repeat_class = repeat_file_short$repeat_class[1:499])
   #if a region contains more than one tile, make it to a couple of entry, each containing one tile
   more_than_one_tile = tiles %>% filter(start_tile != end_tiles)
   tiles_single = tiles %>% anti_join(more_than_one_tile)
