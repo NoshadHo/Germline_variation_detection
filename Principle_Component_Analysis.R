@@ -88,12 +88,12 @@
       blacklist_removed_tile_list_newMask = blacklist_removed_tile_list_newMask %>% mutate(new_row = row_number())
       sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(-tile)
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
-    svd = svd(sex_removed_tile_cov_gc_blacklist)
+    svd = svd(sex_removed_tile_cov_gc_blacklist_newMask)
     #scree plot
     as.data.frame(svd$d) %>% ggplot()+
       geom_point(aes(y = svd$d, x = 1:length(svd$d)))+theme_minimal()+geom_line(aes(y = svd$d, x = 1:length(svd$d)))
     #we choose the number of sc to be deleted
-    sc_num = 8
+    sc_num = 10
     
     svd$d[1:sc_num] = 0
     svd$d = diag(svd$d)
@@ -145,5 +145,5 @@
     #file$tile[14324]
     #temp = (as.data.frame(file$tile)) %>% mutate(tile = row_number())
     #(temp %>% group_by(arm) %>% slice(1))[35:38,]
-    #blacklist_removed_tile_list %>% filter(tile >= 12341) %>% slice(1)
+    #blacklist_removed_tile_list_newMask %>% filter(tile >= 9457) %>% slice(1)
     

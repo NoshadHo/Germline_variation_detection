@@ -5,6 +5,8 @@ repeat_file_short = repeat_file %>% select(genoName,genoStart,genoEnd,repClass)
 repeat_file_short = repeat_file_short %>% filter(nchar(genoName) == 4)
 colnames(repeat_file_short) = c('chr','start','end','repeat_class')  
 
+
+
 bed_to_tile_modified = function(bed_file,col_names = FALSE, RDSfile){
   if(col_names == FALSE){
     colnames(bed_file) = c('chr','start','end','repeat_class')  

@@ -162,7 +162,7 @@ heatmap.2(as.matrix(t(tile_coverage[22900:23000,])),density.info="none", trace="
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_coverage[,74014])
+  tile1 = as.data.frame(tile_coverage[,61468])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5

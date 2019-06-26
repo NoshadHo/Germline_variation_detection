@@ -86,6 +86,7 @@ sex_removed_tile_cov_gc = sex_removed_tile_cov_gc %>% mutate(blacklist = blackli
 blacklist_removed_tile_list_newMask = sex_removed_tile_cov_gc %>% filter(blacklist == 0) %>% select(tile)
 blacklist_removed_tile_list_newMask = blacklist_removed_tile_list_newMask %>% mutate(new_row = row_number())
 sex_removed_tile_cov_gc_blacklist_newMask= sex_removed_tile_cov_gc %>% filter(blacklist  == 0)
+sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(-tile,-blacklist)
 #in_blacklist = (blacklist_new %>% filter(blacklist > 0))$tile
 
 #length(intersect(in_blacklist,ext_blacklist))
