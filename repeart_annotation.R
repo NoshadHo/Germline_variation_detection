@@ -2,22 +2,25 @@ repeat_file = read_tsv("~/Codes/Germline_variation_detection/genome_repeat_5.bed
 
 #generate a file for bed_to_tile function:
 repeat_file_short = repeat_file %>% select(genoName,genoStart,genoEnd,repClass)
-repeat_file_short = repeat_file_short %>% filter(nchar(genoName) == 4)
+repeat_file_short = repeat_file_short %>% filter(nchar(genoName) == 4 | nchar(genoName) == 5)
+bed_file = repeat_file_short
+rm(repeat_file,repeat_file_short)
 colnames(repeat_file_short) = c('chr','start','end','repeat_class')  
 
 
 
-bed_to_tile_modified = function(bed_file,col_names = FALSE, RDSfile){
+bed_to_tile_modified = function(bed_file,col_names = FALSE){
   if(col_names == FALSE){
     colnames(bed_file) = c('chr','start','end','repeat_class')  
   }
   tiles = list()
-  
+  print("here")
   PTIME = system.time({
     tiles = foreach(i = 1:dim(bed_file)[1]) %dopar% {
-      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file))))
+      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file_tile))))
   }
   })
+  print("after")
   tiles = as.data.frame(do.call(rbind,tiles))
   colnames(tiles) = c("start_tile","end_tiles")
   tiles = tiles %>% mutate(repeat_class = repeat_file_short$repeat_class)
@@ -36,4 +39,4 @@ bed_to_tile_modified = function(bed_file,col_names = FALSE, RDSfile){
   return(tile_list)
 }
 
-repeat_tilies = bed_to_tile_modified(repeat_file_short,RDSfile = file)
+repeat_tiles = bed_to_tile_modified(repeat_file_short,RDSfile = file)

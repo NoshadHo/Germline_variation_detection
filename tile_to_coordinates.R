@@ -1,11 +1,11 @@
-tile_to_coordinates = function(tile,RDSfile){ #RDSfile is a one of the .RDS files of patients, don't matter which one
-  range = as.data.frame(file$tile[tile]) %>% select(seqnames,start,end,blacklist)
+tile_to_coordinates = function(tile,file_tile){ #RDSfile is a one of the .RDS files of patients, don't matter which one
+  range = as.data.frame(file_tile[tile]) %>% select(seqnames,start,end,blacklist)
   return(range)
 }
 
 
-coordinates_to_tile = function(chr,start_coord,end_coord,RDSfile){
-  range = as.data.frame(RDSfile$tile)
+coordinates_to_tile = function(chr,start_coord,end_coord,file_tile){ #file_tile is the list of tiles fro file = file$tile
+  range = as.data.frame(file_tile)
   range = range %>% mutate(tile = row_number())
   start_tile = (range %>% filter(start < start_coord & end > start_coord & seqnames == as.character(chr)))$tile
   end_tile = (range %>% filter(start < end_coord & end > end_coord & seqnames == as.character(chr)))$tile

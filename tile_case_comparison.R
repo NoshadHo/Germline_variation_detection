@@ -162,7 +162,7 @@ heatmap.2(as.matrix(t(tile_coverage[22900:23000,])),density.info="none", trace="
 #whenever we want to get informations about one specific tile, we should use this chunk
 ###########################
   #look at the distribution of tiles (the already finded to be significant)
-  tile1 = as.data.frame(tile_coverage[,61468])
+  tile1 = as.data.frame(purified_tile_cov_gc_normalized[12932,])
   colnames(tile1) = "coverage"
   #for trimodal: tile 111968 in lh5
   #for bimodal: tile 276 in lh5
@@ -188,7 +188,7 @@ heatmap.2(as.matrix(t(tile_coverage[22900:23000,])),density.info="none", trace="
   #cluster the data using multimodal fitting
   PTIME = system.time({
   significant_tiles = foreach(i = 1:dim(tile_coverage)[2]) %dopar% {
-    if (sum(tile_coverage[,i]) > 0.1){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
+    if (sum(tile_coverage[,i]) > 0.01){ #if all the values are zero, or we only have 1 non-zero value, Mclust can't function
       try({k = Mclust(tile_coverage[,i],verbose = FALSE)})
       #only keep ones with more than one component (multimodals)
       if (length(unique(k$classification)) > 1){
