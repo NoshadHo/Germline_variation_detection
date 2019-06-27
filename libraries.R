@@ -23,7 +23,7 @@ library(factoextra)
 set.seed(1024)
 numCores = detectCores()
 registerDoParallel(numCores-1)
-registerDoParallel(8)
+registerDoParallel(9)
 set.seed(1024)
 
 list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){

@@ -13,7 +13,7 @@ cppFunction('
 }
 ')
 
-df = as.numeric(purified_tile_cov_gc_normalized[30547,])
+df = as.numeric(purified_tile_cov_gc_normalized[46398,])
 
 #mad
 mad = median(abs(df-median(df)))
@@ -21,7 +21,7 @@ sum((df > (median(input_vector)+mad*1.5)))
 sum((df < (median(input_vector)-mad*1.5)))
 
 #dbscan
-db = fpc::dbscan(data = df,eps = (0.05),MinPts = 5,method = 'raw')
+db = fpc::dbscan(data = df,eps = (0.1),MinPts = 4,method = 'raw')
 a = as.data.frame(df) %>% mutate(clust = db$cluster)
 a %>% ggplot()+geom_point(aes(y = 0, x = df, color = as.factor(clust)))+geom_vline(xintercept = median(input_vector)+mad*1)+
   geom_vline(xintercept = -(median(input_vector)+mad*1))+theme_linedraw()+xlim(-1,1)
@@ -75,8 +75,9 @@ dbscan_tiles_2 = dbscan_tiles %>% filter(clust_num == 2) %>% select(tile)
 dbscan_tiles_3 = dbscan_tiles %>% filter(clust_num == 3) %>% select(tile)
 dbscan_tiles_all = dbscan_tiles %>% select(tile)
 
-intersect(range_dist_tiles,range_tiles)
+a = intersect(dbscan_tiles %>% select(tile),range_tiles)
 
 #remove intersect of tile_ranges and tile_Ranges_multimodal, see what are the rest of the selected
 excluded_trmultimodal_tr = range_dist_tiles %>% filter(!(tile %in% range_tiles$tile))
 excluded_trmultimodal_tr = dbscan_tiles %>% anti_join(range_dist_tiles,by = "tile")
+excluded_trmultimodal_tr_2 = dbscan_tiles %>% select(tile) %>% anti_join(a,by = "tile")
