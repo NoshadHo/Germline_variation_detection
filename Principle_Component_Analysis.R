@@ -145,5 +145,6 @@
     #file$tile[14324]
     #temp = (as.data.frame(file$tile)) %>% mutate(tile = row_number())
     #(temp %>% group_by(arm) %>% slice(1))[35:38,]
-    #blacklist_removed_tile_list_newMask %>% filter(tile >= 9457) %>% slice(1)
+    #blacklist_removed_tile_list_newMask %>% filter(tile >= 120430) %>% slice(1)
+    #blacklist_removed_tile_list_newMask %>% filter(new_row == 120430)
     
