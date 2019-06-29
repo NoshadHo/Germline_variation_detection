@@ -1,11 +1,26 @@
-tile_to_coordinates = function(tile,file_tile){ #RDSfile is a one of the .RDS files of patients, don't matter which one
-  range = as.data.frame(file_tile[tile]) %>% select(seqnames,start,end,blacklist)
+tile_to_coordinates = function(tile,file){ #RDSfile is a one of the .RDS files of patients, don't matter which one
+  range = as.data.frame(file$tile[tile]) %>% select(seqnames,start,end,blacklist)
   return(range)
 }
 
 
-coordinates_to_tile = function(chr,start_coord,end_coord,file_tile){ #file_tile is the list of tiles fro file = file$tile
-  range = as.data.frame(file_tile)
+tile_to_bed(tiles,output_Address){ #example for tiles: tiles = blacklist_new_2 %>% filter(blacklist > 0)
+  output = as.data.frame(matrix(nrow = dim(tiles)[1],ncol = 3))
+  for (i in 1:dim(tiles)[1]){
+    output[i,] = as.data.frame(tile_to_coordinates(tiles[i,1],file)[,1:3])
+    print(i)
+  }
+  output = output %>% mutate(V1 = paste("chr",as.character(V1),sep = ""))
+  output = output %>% mutate(V1 = if_else(V1=='chr23',"chrX",V1))
+  output = output %>% mutate(V1 = if_else(V1=='chr24',"chrY",V1))
+  ((output %>% group_by(V1)) %>% summarise(a = n()))$a
+  #write file
+  write_tsv(output,output_Address,col_names = FALSE)
+}
+as.data.frame(do.call(rbind,output))
+
+coordinates_to_tile = function(chr,start_coord,end_coord,file){ #file_tile is the list of tiles fro file = file$tile
+  range = as.data.frame(file$tile)
   range = range %>% mutate(tile = row_number())
   start_tile = (range %>% filter(start < start_coord & end > start_coord & seqnames == as.character(chr)))$tile
   end_tile = (range %>% filter(start < end_coord & end > end_coord & seqnames == as.character(chr)))$tile
@@ -25,7 +40,7 @@ bed_to_tile = function(file_address,col_names = FALSE, RDSfile){
   tiles = list()
   for (i in 1:dim(bed_file)[1]){
     if (nchar(bed_file$chr[i]) == 4){
-      tiles[i] = as.data.frame((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file)))
+      tiles[i] = as.data.frame((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],RDSfile)))
       print(paste("Region has proccessed:",i))
     }
   }

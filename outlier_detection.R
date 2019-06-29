@@ -13,7 +13,7 @@ cppFunction('
 }
 ')
 
-df = as.numeric(purified_tile_cov_gc_normalized[46398,])
+df = as.numeric(purified_tile_cov_gc_normalized[216564,])
 
 #mad
 mad = median(abs(df-median(df)))
@@ -55,7 +55,7 @@ cov_ranges = cov_ranges %>% mutate(tile = row_number())
 cov_ranges %>% filter(range > 5)
 
 #tiles ranges multimodal
-k = Mclust(cov_ranges[,3],verbose = FALSE)
+k = Mclust(cov_ranges[,3],verbose = FALSE,G = 3)
 summary(k)
 cov_ranges_clust = (cov_ranges %>% select(range)) %>% mutate(cluster = k$classification) #add clusters to data.frame
 cov_ranges_clust$cluster = as.factor(cov_ranges_clust$cluster)
@@ -65,6 +65,7 @@ cov_ranges_clust %>% ggplot(aes(x = range))+geom_density(alpha = 0.4)+theme_line
 
 cov_ranges_clust %>% ggplot(aes(x = range, fill = cluster))+geom_density(alpha = 0.4)+theme_linedraw()+xlim(-1,5)+ylim(0,200)   #look at the distribution of coverage in a specific tile for each modal
 range_dist_tiles = cov_ranges_clust %>% mutate(tile = row_number()) %>% filter(cluster == 9) %>% select(tile)
+range_dist_tiles_2 = cov_ranges_clust %>% mutate(tile = row_number()) %>% filter(cluster == 9 | cluster == 8) %>% select(tile)
 
 
 #Lets see how many of significant tiles are captured in other methods
@@ -75,7 +76,7 @@ dbscan_tiles_2 = dbscan_tiles %>% filter(clust_num == 2) %>% select(tile)
 dbscan_tiles_3 = dbscan_tiles %>% filter(clust_num == 3) %>% select(tile)
 dbscan_tiles_all = dbscan_tiles %>% select(tile)
 
-a = intersect(dbscan_tiles %>% select(tile),range_tiles)
+dim(intersect(range_dist_tiles_3,range_dist_tiles_2))
 
 #remove intersect of tile_ranges and tile_Ranges_multimodal, see what are the rest of the selected
 excluded_trmultimodal_tr = range_dist_tiles %>% filter(!(tile %in% range_tiles$tile))
