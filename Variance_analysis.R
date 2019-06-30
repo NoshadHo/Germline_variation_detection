@@ -42,7 +42,7 @@ variance_sex = function(data, sex){ #data here is tile_coverage matrix, with 110
   time1 = system.time({ #we break data set to data sets with the size equal to step_size, then run them parallel.
     #processing big data self will be too time consuming.
   STEP_SIZE = 5000
-  variance_list = foreach(i = 0:(round(dim(data)[2]/STEP_SIZE)-1)) %dopar% {
+  variance_list = foreach(i = 0:(floor(dim(data)[2]/STEP_SIZE))) %dopar% {
     subdata = data[,(i*STEP_SIZE+1):(min((i+1)*STEP_SIZE,dim(data)[2]))]
     subdata %>% summarise_all(sd)
   }
@@ -52,13 +52,22 @@ variance_sex = function(data, sex){ #data here is tile_coverage matrix, with 110
   return(variance_df)
 }
 
-variance_df = variance_sex(as.data.frame(t(purified_tile_cov_gc_normalized)),"m")
-variance_df = variance_df %>% dplyr::mutate(tile = blacklist_removed_tile_list$tile)
+variance_df = variance_sex(as.data.frame(t(sex_removed_tile_cov_gc_blacklist_newMask)),"m")
+variance_df = variance_df %>% dplyr::mutate(tile = blacklist_removed_tile_list_newMask$tile)
 variance_df_bl_6 = variance_df
 ggplot()+geom_point(aes(x = variance_df$tile,y = variance_df$V1),size = 0.4)+theme_minimal()+geom_vline(xintercept = 287509,linetype = "dashed",size = 0.3)+
   geom_vline(xintercept = 303114,linetype = "dashed",size = 0.3)+ylim(0,2)+
   labs(title = paste("PC removed",sc_num),x = "Genome tiles", y = "Variance")
 
+#EVALUATE THE PERFOMANCE OF NEW BLACKLISTED REGIONS:
+variance_df = variance_sex(as.data.frame(t(tile_cov_gc_normalized)),"m")
+variance_df = variance_df %>% mutate(blacklist = blacklist_new$blacklist)
+start = 1
+end = 24896
+data = (variance_df %>% slice(1:(end-start+1)))
+data = data %>% mutate(blacklist = if_else('1','blacklist','normal'))
+ggplot()+
+  geom_point(aes(x = 1:(end-start+1), y = data$V1,color = as.factor(data$blacklist)))
 #LOOK AT THE DIFFERENCE OF VARIANCE EACH STEP OF PC REMOVAL--------------------------------------------------------------------------------------
   variance_diff_0_1 = variance_df_0 - variance_df_1
   variance_diff_1_2 = variance_df_1 - variance_df_2

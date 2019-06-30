@@ -80,13 +80,13 @@
     sex_removed_tile_cov_gc_blacklist = sex_removed_tile_cov_gc_blacklist %>% select(-tile)
     
     #ADDING NEW BLACKLIST MASK (THESE ARE THE REGIONS SELECTED BY VARIANCE ANALYSIS, THE REGIONS PC'S EFFECT THE MOST)
-      sex_removed_tile_cov_gc_blacklist_newMask = (sex_removed_tile_cov_gc_blacklist %>% mutate(tile = blacklist_removed_tile_list$tile)) #first add the ORIGINAL ROW's to the matrix
+      #sex_removed_tile_cov_gc_blacklist_newMask = (sex_removed_tile_cov_gc_blacklist %>% mutate(tile = blacklist_removed_tile_list$tile)) #first add the ORIGINAL ROW's to the matrix
       #now remove the tiles(rows) we want to be removed
-      NEW_MASK = c(14320:14327,278577:278603,28188,96148,267422)  #it has the tile numbers
-      sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% filter(!(tile %in% NEW_MASK))
-      blacklist_removed_tile_list_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(tile)
-      blacklist_removed_tile_list_newMask = blacklist_removed_tile_list_newMask %>% mutate(new_row = row_number())
-      sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(-tile)
+      #NEW_MASK = c(14320:14327,278577:278603,28188,96148,267422)  #it has the tile numbers
+      #sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% filter(!(tile %in% NEW_MASK))
+      #blacklist_removed_tile_list_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(tile)
+      #blacklist_removed_tile_list_newMask = blacklist_removed_tile_list_newMask %>% mutate(new_row = row_number())
+      #sex_removed_tile_cov_gc_blacklist_newMask = sex_removed_tile_cov_gc_blacklist_newMask %>% select(-tile)
     #our matrix should have 110 rows (we want each point to be a patient and not a tile)
     svd = svd(sex_removed_tile_cov_gc_blacklist_newMask)
     #scree plot

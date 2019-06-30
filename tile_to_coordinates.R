@@ -13,7 +13,10 @@ tile_to_bed(tiles,output_Address){ #example for tiles: tiles = blacklist_new_2 %
   output = output %>% mutate(V1 = paste("chr",as.character(V1),sep = ""))
   output = output %>% mutate(V1 = if_else(V1=='chr23',"chrX",V1))
   output = output %>% mutate(V1 = if_else(V1=='chr24',"chrY",V1))
-  ((output %>% group_by(V1)) %>% summarise(a = n()))$a
+  colnames(output) = c("seqnames", "start", "end")
+  GRoutput = makeGRangesFromDataFrame(output)
+  GRoutput = GenomicRanges::reduce(GRoutput)
+  output = as.data.frame(GRoutput) %>% select(seqnames,start,end)
   #write file
   write_tsv(output,output_Address,col_names = FALSE)
 }
@@ -92,9 +95,9 @@ new_blacklist_tiles = c(1:90,260:280,12000:12341,1278:1340,1650:1697,24841:24871
                         232652:232752,242172:242332,253630:253760,
                         232820:232952,242902:242952,253405:253420,
                         233000:233152,243202:243732)
-blacklist_new = blacklist %>% mutate(blacklist = case_when(blacklist > 0 ~ 1,
-                                           tile %in% new_blacklist_tiles ~ 1,
-                                           TRUE ~ 0))
+blacklist_new = blacklist %>% mutate(blacklist = case_when(blacklist > 0 ~ 'blacklist',
+                                           tile %in% new_blacklist_tiles ~ 'blacklist',
+                                           TRUE ~ 'normal'))
 #make it sex exclusive
 blacklist_new = blacklist_new[1:287509,]
 sex_removed_tile_cov_gc = sex_removed_tile_cov_gc %>% mutate(blacklist = blacklist_new$blacklist)
