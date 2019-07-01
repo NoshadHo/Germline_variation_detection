@@ -47,18 +47,18 @@
 
 # GC NORMALIZATION-------------------------------------------------------------------------------------------------------------------------------
   #use leoss fit for normalization
-    tile_cov_gc_normalized = tile_coverage
+    tile_cov_gc_normalized_227 = tile_coverage
     for (patient in 1:dim(tile_coverage)[2]){
       gc.residuals = limma::loessFit(y = tile_coverage[[patient]], x=tile_gc$gc)$residuals
       cov.offset = lm(gc.residuals~tile_coverage[[patient]])$coefficients[1]
       gc.residuals = gc.residuals - cov.offset
-      tile_cov_gc_normalized[patient] = gc.residuals
+      tile_cov_gc_normalized_227[patient] = gc.residuals
       print(paste("patient is proccessed:",patient))
     }
     save.image("~/Codes/Germline_variation_detection/K-means_Multimodal_fitting_data_gcNormlized.RData")
     #Main results here is tile_cov_gc_normalized. the rest is for QC.
   #Quality control, ploting the same plot as last part, with new data  
-    tile_cov_gc = tile_cov_gc_normalized %>% select(cov = !!patient_num)
+    tile_cov_gc = tile_cov_gc_normalized_227 %>% select(cov = !!patient_num)
     tile_cov_gc = tile_cov_gc %>% mutate(gc = tile_gc$gc)
     #look at the gc-cov for cov < 1 (less than 1000 points are above 1)
     p_norm = (tile_cov_gc %>% filter(cov < 1)) %>% ggplot(aes(x = gc,y = cov))+

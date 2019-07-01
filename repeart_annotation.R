@@ -5,7 +5,7 @@ repeat_file_short = repeat_file %>% select(genoName,genoStart,genoEnd,repClass)
 repeat_file_short = repeat_file_short %>% filter(nchar(genoName) == 4 | nchar(genoName) == 5)
 bed_file = repeat_file_short
 rm(repeat_file,repeat_file_short)
-colnames(repeat_file_short) = c('chr','start','end','repeat_class')  
+colnames(bed_file) = c('chr','start','end','repeat_class')  
 
 
 
@@ -17,7 +17,7 @@ bed_to_tile_modified = function(bed_file,col_names = FALSE){
   print("here")
   PTIME = system.time({
     tiles = foreach(i = 1:dim(bed_file)[1]) %dopar% {
-      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file_tile))))
+      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file))))
   }
   })
   print("after")

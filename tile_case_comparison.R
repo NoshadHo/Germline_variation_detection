@@ -40,7 +40,7 @@ colnames(sex) = c("patient_ID", "Sex")
 for (file_num in 1:(length(files))){ #can be potentially multithreat
   file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
   tiles = as.data.frame(file$tile)
-  #tile_coverage[file_num] = tiles %>% select(n.cov)
+  tile_coverage[file_num] = tiles %>% select(n.cov)
   tile_lr[file_num] = tiles %>% select(lr)
   colnames_list[file_num] = files[file_num]
   #sex[file_num,1] = file_num
