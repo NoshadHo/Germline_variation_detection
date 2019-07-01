@@ -32,6 +32,7 @@ files = list.files()
 #results file
 tile_coverage = list()
 tile_lr = list()
+tile_unmasked = list()
 colnames_list = ""
 sex = as.data.frame(matrix(ncol = 2,nrow = length(files)))
 colnames(sex) = c("patient_ID", "Sex")
@@ -40,13 +41,18 @@ colnames(sex) = c("patient_ID", "Sex")
 for (file_num in 1:(length(files))){ #can be potentially multithreat
   file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
   tiles = as.data.frame(file$tile)
-  tile_coverage[file_num] = tiles %>% select(n.cov)
-  tile_lr[file_num] = tiles %>% select(lr)
+  #tile_coverage[file_num] = tiles %>% select(n.cov)
+  #tile_lr[file_num] = tiles %>% select(lr)
+  #colnames_list[file_num] = files[file_num]
+  tile_unmasked[file_num] = tiles %>% select(unmasked)
   colnames_list[file_num] = files[file_num]
   #sex[file_num,1] = file_num
   #sex[file_num,2] = detect.sex(file$var,file$tile)
   print(paste("File processed: ",file_num,"/",length(files),sep = ""))
 }
+tile_unmasked = as.data.frame(matrix(unlist(tile_unmasked),ncol = length(tile_unmasked), byrow = FALSE))
+colnames(tile_unmasked) = colnames_list
+
 tile_lr = as.data.frame(matrix(unlist(tile_lr),ncol = length(tile_lr), byrow = FALSE))
 colnames(tile_lr) = colnames_list
 
