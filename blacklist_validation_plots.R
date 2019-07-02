@@ -93,3 +93,51 @@ blacklist_bed_tile_count = blacklist_bed_tile_count %>% group_by(tile_count) %>%
 blacklist_bed_tile_count %>% ggplot(aes(x = tile_count,y = freq))+geom_point()+geom_smooth()
 
 
+#unmasked plot of data:
+tile_umasked = tile_unmasked %>% select(!!1)
+tile_umasked = tile_umasked %>% mutate(blacklist_new$blacklist)
+var = variance_sex(as.data.frame(t(tile_cov_gc_normalized_227)))
+tile_umasked = tile_umasked %>% mutate(var = var[,1])
+colnames(tile_umasked) = c('unmasked','blacklist','var')
+
+var_unmasked_plot = function(tile_umasked){
+scatterPlot = tile_umasked %>% ggplot()+geom_point(aes(x = unmasked,y = var, color = blacklist))+ylim(0,7)
+xdensity = tile_umasked %>% ggplot()+geom_density(aes(x = unmasked, fill = blacklist))
+ydensity = tile_umasked %>% ggplot()+geom_density(aes(x = var, fill = blacklist))+xlim(1,7.5)+coord_flip()
+blankPlot <- ggplot()+geom_blank(aes(1,1))+
+  theme(plot.background = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()
+  )
+
+grid.arrange(xdensity, blankPlot, scatterPlot, ydensity, 
+             ncol=2, nrow=2, widths=c(4, 1.4), heights=c(1.4, 4))
+}
+
+#remove sex chromosomes
+tile_umasked = tile_umasked %>% slice(1:287509)
+tile_umasked = tile_umasked %>% filter(blacklist == "normal")
+var_unmasked_plot(tile_umasked)
+
+#remove the first pc:
+svd_data = tile_cov_gc_normalized_227 %>% slice(1:287509) %>% mutate(blacklist = blacklist_new[1:287509,2]) %>% 
+  filter(blacklist == "normal") %>% select(-blacklist)
+svd = svd(svd_data)
+sc_num = 1
+
+svd$d[1:sc_num] = 0
+svd$d = diag(svd$d)
+purified_tile_cov_gc_normalized = svd$u %*% tcrossprod(svd$d,svd$v)
+tile_umasked = tile_unmasked %>% select(!!1)
+tile_umasked = tile_umasked %>% mutate(blacklist = blacklist_new$blacklist)
+var_2 = variance_sex(as.data.frame(t(purified_tile_cov_gc_normalized)))
+tile_umasked = tile_umasked %>% slice(1:287509) %>% filter(blacklist == "normal") %>% mutate(var = var_2[,1])
+colnames(tile_umasked) = c('unmasked','blacklist','var')
+var_unmasked_plot(tile_umasked)
