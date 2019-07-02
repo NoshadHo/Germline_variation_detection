@@ -1,42 +1,81 @@
 repeat_file = read_tsv("~/Codes/Germline_variation_detection/genome_repeat_5.bed",col_names = TRUE)
-
+blacklist_file = read_tsv("~/Codes/Germline_variation_detection/BLACKLIST.bed",col_names = FALSE)
+colnames(blacklist_file) = c("seqnames","start", "end")
 #generate a file for bed_to_tile function:
 repeat_file_short = repeat_file %>% select(genoName,genoStart,genoEnd,repClass)
 repeat_file_short = repeat_file_short %>% filter(nchar(genoName) == 4 | nchar(genoName) == 5)
-bed_file = repeat_file_short
-rm(repeat_file,repeat_file_short)
-colnames(bed_file) = c('chr','start','end','repeat_class')  
+colnames(repeat_file_short) = c('seqnames','start','end','repeat_class')  
+repeat_file_short = repeat_file_short %>% arrange(seqnames,start)
 
+#this code can be easily converted to the 'per region' annotation 
+blacklist_length = as.numeric(blacklist_file %>% transmute(length = end-start) %>% summarise(sum(length)))
+repeat_SINE = 0
+repeat_LINE = 0
+repeat_LTR = 0
+repeat_SIMPLE = 0
+repeat_proportion = 0
 
-
-bed_to_tile_modified = function(bed_file,col_names = FALSE){
-  if(col_names == FALSE){
-    colnames(bed_file) = c('chr','start','end','repeat_class')  
-  }
-  tiles = list()
-  print("here")
-  PTIME = system.time({
-    tiles = foreach(i = 1:dim(bed_file)[1]) %dopar% {
-      return(c((coordinates_to_tile(bed_file$chr[i], bed_file$start[i],bed_file$end[i],file))))
-  }
-  })
-  print("after")
-  tiles = as.data.frame(do.call(rbind,tiles))
-  colnames(tiles) = c("start_tile","end_tiles")
-  tiles = tiles %>% mutate(repeat_class = repeat_file_short$repeat_class)
-  #if a region contains more than one tile, make it to a couple of entry, each containing one tile
-  more_than_one_tile = tiles %>% filter(start_tile != end_tiles)
-  tiles_single = tiles %>% anti_join(more_than_one_tile)
+for (i in 1:dim(blacklist_file)[1]){
+  chr = as.character(blacklist_file[i,1])
+  start_bl = as.numeric(blacklist_file[i,2])
+  end_bl = as.numeric(blacklist_file[i,3])
+  repeats = repeat_file_short %>% filter(seqnames == chr & start > start_bl & end < end_bl)
+  repeat_proportion = repeat_proportion + as.numeric(repeats %>% select(start,end) %>% summarise_all(sum) %>% transmute(end-start))
+    #/(end_bl-start_bl)
+  repeats = repeats %>% group_by(repeat_class) %>% summarise(count = n()) %>% 
+    mutate(weighted_percent = (count/sum(count))*(end_bl-start_bl)/blacklist_length)
+  if (!is.na(as.numeric(repeats %>%  filter(repeat_class == 'SINE') %>% select(weighted_percent)))){
+  repeat_SINE = repeat_SINE + as.numeric(repeats %>%  filter(repeat_class == 'SINE') %>% select(weighted_percent))}
   
-  tile_list = (tiles_single$start_tile)
-  tile_anno = tiles_single$repeat_class
-  for (i in 1:dim(more_than_one_tile)[1]){
-    tile_list = c(tile_list,(more_than_one_tile$start_tile[i]):(more_than_one_tile$end_tiles[i]))
-    for (i in (more_than_one_tile$start_tile[i]):(more_than_one_tile$end_tiles[i])) {tile_anno = c(tile_anno, more_than_one_tile$repeat_class[i])}
-    print(i)
-  }
+  if (!is.na(as.numeric(repeats %>%  filter(repeat_class == 'LINE') %>% select(weighted_percent)))){
+  repeat_LINE = repeat_LINE + as.numeric(repeats %>%  filter(repeat_class == 'LINE') %>% select(weighted_percent))}
   
-  return(tile_list)
+  if (!is.na(as.numeric(repeats %>%  filter(repeat_class == 'LTR') %>% select(weighted_percent)))){
+  repeat_LTR = repeat_LTR + as.numeric(repeats %>%  filter(repeat_class == 'LTR') %>% select(weighted_percent))}
+  
+  if (!is.na(as.numeric(repeats %>%  filter(repeat_class == 'Simple_repeat') %>% select(weighted_percent)))){
+  repeat_SIMPLE = repeat_SIMPLE + as.numeric(repeats %>%  filter(repeat_class == 'Simple_repeat') %>% select(weighted_percent))}
+  print(i)
 }
+repeat_proportion = repeat_proportion/blacklist_length
 
-repeat_tiles = bed_to_tile_modified(repeat_file_short,RDSfile = file)
+# Pie Chart with Percentages
+slices = c(1-repeat_proportion, 
+            repeat_SINE*repeat_proportion, 
+            repeat_LINE*repeat_proportion, 
+            repeat_LTR*repeat_proportion,
+            repeat_SIMPLE*repeat_proportion,
+            (1 - (repeat_SINE+repeat_LINE+repeat_LTR+repeat_SIMPLE))*repeat_proportion)
+lbls <- c("NO REPEAT", "SINE", "LINE", "LTR", "SIMPLE REPEATS", "OTHERS")
+pct <- round(slices/sum(slices)*100)
+lbls <- paste(lbls, pct) # add percents to labels
+lbls <- paste(lbls,"%",sep="") # ad % to labels
+pie(slices,labels = lbls, col=terrain.colors(length(lbls)),
+    main="Pie Chart of repeat annotations") 
+
+
+#important ones: Simple_repeat,SINE,LINE,Satellite,LTR
+#
+# repeat_class  
+# <chr>         
+# 1 Simple_repeat 
+# 2 Satellite     
+# 3 LINE          
+# 4 DNA           
+# 5 SINE          
+# 6 LTR           
+# 7 Low_complexity
+# 8 LTR?          
+# 9 snRNA         
+# 10 tRNA          
+# 11 DNA?          
+# 12 Retroposon    
+# 13 srpRNA        
+# 14 rRNA          
+# 15 Unknown       
+# 16 RC            
+# 17 scRNA         
+# 18 RNA           
+# 19 RC?           
+# 20 SINE? 
+#
