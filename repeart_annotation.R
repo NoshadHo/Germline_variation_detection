@@ -14,11 +14,14 @@ repeat_LINE = 0
 repeat_LTR = 0
 repeat_SIMPLE = 0
 repeat_proportion = 0
-
+repeat_file_short_temp = repeat_file_short_temp %>% mutate(seen = 0)
 for (i in 1:dim(blacklist_file)[1]){
   chr = as.character(blacklist_file[i,1])
   start_bl = as.numeric(blacklist_file[i,2])
   end_bl = as.numeric(blacklist_file[i,3])
+  repeat_file_short_temp = repeat_file_short_temp %>% mutate(seen = case_when((seqnames == chr & start > start_bl & end < end_bl)~1,
+                                                             seen == 1 ~ 1,
+                                                             TRUE~0))
   repeats = repeat_file_short %>% filter(seqnames == chr & start > start_bl & end < end_bl)
   repeat_proportion = repeat_proportion + as.numeric(repeats %>% select(start,end) %>% summarise_all(sum) %>% transmute(end-start))
     #/(end_bl-start_bl)
