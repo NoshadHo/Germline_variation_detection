@@ -141,3 +141,29 @@ var_2 = variance_sex(as.data.frame(t(purified_tile_cov_gc_normalized)))
 tile_umasked = tile_umasked %>% slice(1:287509) %>% filter(blacklist == "normal") %>% mutate(var = var_2[,1])
 colnames(tile_umasked) = c('unmasked','blacklist','var')
 var_unmasked_plot(tile_umasked)
+
+#lr-tile plot with blacklisted tiles
+patient_lr = tile_lr %>% select(!!45)
+patient_lr = patient_lr %>% mutate(blacklist = blacklist_new$blacklist)
+colnames(patient_lr) = c('lr','blacklist')
+patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = lr,color = blacklist))+geom_point()
+167492153652
+
+
+#lr with variance coloring
+  variance_df = variance_sex(as.data.frame(t()),"m")
+  variance_df = variance_df2
+  variance_df = variance_df %>% mutate(lr = tile_lr[,106])
+
+  #plot for chr1
+  variance_df = variance_df %>% filter(V1 < 1)
+  chr_start = 106122
+  chr_end = 123203
+  ggplot()+geom_point(aes(x = chr_start:chr_end, y = variance_df$lr[chr_start:chr_end], color = variance_df$V1[chr_start:chr_end]))
+#range analysis
+  variance_df = variance_df %>% mutate(range = cov_ranges$range)
+  variance_df = variance_df %>% mutate(unmasked = tile_unmasked[,1])  
+  variance_df %>% ggplot(aes(x = range,y = V1,color = unmasked))+geom_point()+theme_linedraw()
+  variance_df %>% ggplot(aes(x = unmasked))+geom_histogram(binwidth = 0.01)+theme_linedraw()
+
+    

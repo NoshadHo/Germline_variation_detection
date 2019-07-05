@@ -41,8 +41,8 @@ colnames(dbscan_tiles) = c('tile','clust_num')
 
 #finding the max and min for all the tiles:
 TIME = system.time({
-  cov_ranges = foreach(i = 1:dim(purified_tile_cov_gc_normalized)[1]) %dopar%{
-    row = purified_tile_cov_gc_normalized[i,]
+  cov_ranges = foreach(i = 1:dim(tile_cov_gc_normalized_227)[1]) %dopar%{
+    row = tile_cov_gc_normalized_227[i,]
     return(c(min(row),max(row)))
   }
 })

@@ -38,7 +38,7 @@ sex = read_rds(path = "/home/noshadh/Codes/Germline_variation_detection/sex.rds"
 data = as.data.frame(t(tile_cov_gc_normalized))
 
 #CACULATE VARIANCE FOR EACH TILE, FOR EACH SEX--------------------------------------------------------------------------------------------------
-variance_sex = function(data, sex){ #data here is tile_coverage matrix, with 110 rows
+variance_sex = function(data, sex = 'm'){ #data here is tile_coverage matrix, with 110 rows
   time1 = system.time({ #we break data set to data sets with the size equal to step_size, then run them parallel.
     #processing big data self will be too time consuming.
   STEP_SIZE = 5000
