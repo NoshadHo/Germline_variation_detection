@@ -166,4 +166,41 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
   variance_df %>% ggplot(aes(x = range,y = V1,color = unmasked))+geom_point()+theme_linedraw()
   variance_df %>% ggplot(aes(x = unmasked))+geom_histogram(binwidth = 0.01)+theme_linedraw()
 
-    
+
+  
+#coverage + variance plot for blacklists:-------------------------------------------
+  coverage_raw = tile_cov_gc_normalized_227 %>% select(!!101)
+  variance_raw = variance_sex(as.data.frame(t(tile_cov_gc_normalized_227)))
+  
+  start = 45001
+  end = 50000
+  49116
+  coverage = coverage_raw %>% slice(start:end) %>% mutate(blacklist = 0)
+  variance = variance_raw %>% slice(start:end) %>% mutate(blacklist = 0)
+  colnames(coverage) = c("coverage", "blacklist")
+  colnames(variance) = c("variance", "blacklist")
+  
+  
+
+#using 10 tile variance aggregated
+  start_10 = floor(start/10)+1
+  end_10 = floor(end/10)
+  variance.temp = variance %>% mutate(group = floor(seq(from = 1,length.out = (end-start+1),by = 0.1)))
+  variance.temp = variance.temp %>% group_by(group) %>% summarise(mean(variance))
+  variance.temp = variance.temp %>% select(-group)%>% mutate(blacklist = 0)
+  #variance.temp = variance.temp %>% slice(start_10:end_10) %>% mutate(blacklist = 0)
+  colnames(variance.temp) = c("variance", "blacklist")
+  
+  p1 = coverage %>% ggplot(aes(x = start:end, y = coverage, color = as.factor(blacklist))) + geom_point(size = 0.5)
+  p2 = variance %>% ggplot(aes(x = start:end, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)
+  
+  
+  p3 = variance.temp %>% ggplot(aes(x = start_10:end_10, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)+
+    coord_cartesian(xlim = c(start_10,end_10))+geom_hline(yintercept = 0.06)+coord_cartesian(ylim = c(0,1))
+  grid.arrange(p1,p2,p3)
+  
+  variance.temp[408:413,2] = 1
+  coverage[4080:4130,2] = 1
+  variance[4080:4130,2] = 1
+  
+  
