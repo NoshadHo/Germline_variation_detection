@@ -1,6 +1,5 @@
 library(GenomicRanges)
 library(cnvex) #this is a local library, might not work on other machines
-library(tidyverse)
 library(rlist)
 library(gplots)
 library(cluster)    # clustering algorithms
@@ -21,10 +20,11 @@ library(fpc)
 library(dbscan)
 library(factoextra)
 library(ggplot2)
+library(tidyverse)
 set.seed(1024)
 numCores = detectCores()
 registerDoParallel(numCores-1)
-registerDoParallel(5)
+registerDoParallel(9)
 set.seed(1024)
 
 list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){

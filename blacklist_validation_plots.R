@@ -1,3 +1,5 @@
+#temporary function, need fixing
+#its goal is to make a plot for each chromosome automaticly and save it
 chromosome_standard_devation_plot = function(data, chr = 0, range = NULL, write_address = '~/Codes/Germline_variation_detection/chr_std_plot'){
   # data format should look like: [1] 308837    227
   #variance_sex function is in Variance_analysis
@@ -32,51 +34,52 @@ chromosome_standard_devation_plot = function(data, chr = 0, range = NULL, write_
 data = tile_cov_gc_normalized_227
 
 #for ploting 6 in one plot----------------------------
-chr = 1
+
+chr = 19
 start = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr) %>% select(tile))
 end = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                    ungroup() %>% slice(chr+1) %>% select(tile))
 p1 = ggplot()+geom_point(aes(x = start:end,y = variance_df$variance[start:end], color = variance_df$blacklist[start:end]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 start_2 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr+1) %>% select(tile))
 end_2 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                    ungroup() %>% slice(chr+2) %>% select(tile))
 p2 = ggplot()+geom_point(aes(x = start_2:end_2,y = variance_df$variance[start_2:end_2], color = variance_df$blacklist[start_2:end_2]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr+1),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr+1),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 start_3 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                        ungroup() %>% slice(chr+2) %>% select(tile))
 end_3 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr+3) %>% select(tile))
 p3 = ggplot()+geom_point(aes(x = start_3:end_3,y = variance_df$variance[start_3:end_3], color = variance_df$blacklist[start_3:end_3]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr+2),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr+2),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 start_4 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                        ungroup() %>% slice(chr+3) %>% select(tile))
 end_4 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr+4) %>% select(tile))
 p4 = ggplot()+geom_point(aes(x = start_4:end_4,y = variance_df$variance[start_4:end_4], color = variance_df$blacklist[start_4:end_4]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr+3),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr+3),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 start_5 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                        ungroup() %>% slice(chr+4) %>% select(tile))
 end_5 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr+5) %>% select(tile))
 p5 = ggplot()+geom_point(aes(x = start_5:end_5,y = variance_df$variance[start_5:end_5], color = variance_df$blacklist[start_5:end_5]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr+4),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr+4),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 start_6 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                        ungroup() %>% slice(chr+5) %>% select(tile))
 end_6 = as.numeric((as.data.frame(file$tile) %>% mutate(tile = row_number()) %>% group_by(seqnames) %>% slice(1))%>% 
                      ungroup() %>% slice(chr+6) %>% select(tile))
 p6 = ggplot()+geom_point(aes(x = start_6:end_6,y = variance_df$variance[start_6:end_6], color = variance_df$blacklist[start_6:end_6]),size = 0.4)+theme_linedraw()+
-  labs(title = paste("Chr",chr+5),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())
+  labs(title = paste("Chr",chr+5),x = "Genome tiles", y = "Variance")+theme(legend.title = element_blank())+coord_cartesian(ylim = c(0,2))
 
 grid.arrange(p1,p2,p3,p4,p5,p6)
-#--------------------------------------------------
+#-------------------------------------------------- 
 
 #box plot for blacklisted regions vs. none blacklisted regions
 ggplot()+geom_boxplot(aes(x = variance_df$blacklist,y = variance_df$variance),size = 0.4)+theme_linedraw()+
@@ -147,7 +150,6 @@ patient_lr = tile_lr %>% select(!!45)
 patient_lr = patient_lr %>% mutate(blacklist = blacklist_new$blacklist)
 colnames(patient_lr) = c('lr','blacklist')
 patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = lr,color = blacklist))+geom_point()
-167492153652
 
 
 #lr with variance coloring
@@ -171,9 +173,9 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
 #coverage + variance plot for blacklists:-------------------------------------------
   coverage_raw = tile_cov_gc_normalized_227 %>% select(!!101)
   variance_raw = variance_sex(as.data.frame(t(tile_cov_gc_normalized_227)))
-  
-  start = 285001
-  end = 288000
+  180950:186460
+  start = 0 + 1
+  end = 24000
   287509
   coverage = coverage_raw %>% dplyr::slice(start:end) %>% mutate(blacklist = 0)
   variance = variance_raw %>% dplyr::slice(start:end) %>% mutate(blacklist = 0)
@@ -192,15 +194,15 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
   colnames(variance.temp) = c("variance", "blacklist")
   
   p1 = coverage %>% ggplot(aes(x = start:end, y = coverage, color = as.factor(blacklist))) + geom_point(size = 0.5)
-  p2 = variance %>% ggplot(aes(x = start:end, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)+
-    scale_x_continuous(breaks=seq(start,end,200))
+  p2 = variance %>% ggplot(aes(x = start:end, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)
+    #scale_x_continuous(breaks=seq(start,end,200))
   
   p3 = variance.temp %>% ggplot(aes(x = start_10:end_10, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)+
-    coord_cartesian(xlim = c(start_10,end_10))+geom_hline(yintercept = 0.06)+coord_cartesian(ylim = c(0,1))+
-    scale_x_continuous(breaks=seq(start_10,end_10,20))
+    coord_cartesian(xlim = c(start_10,end_10))+geom_hline(yintercept = 0.06)+coord_cartesian(ylim = c(0,1))
+    #scale_x_continuous(breaks=seq(start_10,end_10,20))
   grid.arrange(p1,p2,p3)
   
   variance.temp[1:250,2] = 1
-  variance[1500:2350,2] = 1
+  variance[350:390,2] = 1
   coverage[3570:3583,2] = 1
   
