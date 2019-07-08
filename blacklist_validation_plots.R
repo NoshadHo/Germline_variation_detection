@@ -173,6 +173,7 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
 #coverage + variance plot for blacklists:-------------------------------------------
   coverage_raw = tile_cov_gc_normalized_227 %>% select(!!101)
   variance_raw = variance_sex(as.data.frame(t(tile_cov_gc_normalized_227)))
+  colnames(variance_raw) = c("variance", "blacklist")
   180950:186460
   start = 0 + 1
   end = 24000
