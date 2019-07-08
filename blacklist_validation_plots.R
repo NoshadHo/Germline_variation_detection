@@ -172,17 +172,17 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
   coverage_raw = tile_cov_gc_normalized_227 %>% select(!!101)
   variance_raw = variance_sex(as.data.frame(t(tile_cov_gc_normalized_227)))
   
-  start = 45001
-  end = 50000
-  49116
-  coverage = coverage_raw %>% slice(start:end) %>% mutate(blacklist = 0)
-  variance = variance_raw %>% slice(start:end) %>% mutate(blacklist = 0)
+  start = 285001
+  end = 288000
+  287509
+  coverage = coverage_raw %>% dplyr::slice(start:end) %>% mutate(blacklist = 0)
+  variance = variance_raw %>% dplyr::slice(start:end) %>% mutate(blacklist = 0)
   colnames(coverage) = c("coverage", "blacklist")
   colnames(variance) = c("variance", "blacklist")
   
   
-
-#using 10 tile variance aggregated
+  
+  #using 10 tile variance aggregated
   start_10 = floor(start/10)+1
   end_10 = floor(end/10)
   variance.temp = variance %>% mutate(group = floor(seq(from = 1,length.out = (end-start+1),by = 0.1)))
@@ -192,15 +192,15 @@ patient_lr %>% slice(153652:167492) %>% ggplot(aes(x = 1:(167492-153652+1),y = l
   colnames(variance.temp) = c("variance", "blacklist")
   
   p1 = coverage %>% ggplot(aes(x = start:end, y = coverage, color = as.factor(blacklist))) + geom_point(size = 0.5)
-  p2 = variance %>% ggplot(aes(x = start:end, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)
-  
+  p2 = variance %>% ggplot(aes(x = start:end, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)+
+    scale_x_continuous(breaks=seq(start,end,200))
   
   p3 = variance.temp %>% ggplot(aes(x = start_10:end_10, y = variance, color = as.factor(blacklist))) + geom_point(size = 0.5)+
-    coord_cartesian(xlim = c(start_10,end_10))+geom_hline(yintercept = 0.06)+coord_cartesian(ylim = c(0,1))
+    coord_cartesian(xlim = c(start_10,end_10))+geom_hline(yintercept = 0.06)+coord_cartesian(ylim = c(0,1))+
+    scale_x_continuous(breaks=seq(start_10,end_10,20))
   grid.arrange(p1,p2,p3)
   
-  variance.temp[408:413,2] = 1
-  coverage[4080:4130,2] = 1
-  variance[4080:4130,2] = 1
-  
+  variance.temp[1:250,2] = 1
+  variance[1500:2350,2] = 1
+  coverage[3570:3583,2] = 1
   
