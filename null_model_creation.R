@@ -21,7 +21,7 @@ variance_regions = c(2001:10001, 28900:32900, 50000:56200, 70000:72400, 90000:92
 
 #calculate the variance of those regions(tiles)
 variance_raw = variance_raw %>% mutate(tile = row_number())     #variance_row is calculated in blacklist_validation_plots
-variance_region_variances = variance_rwa %>% filter(tile %in% variance_regions)
+variance_region_variances = variance_raw %>% filter(tile %in% variance_regions)
 colnames(variance_region_variances) = c('variance','tile')
 #calculate the density of those variances
 variance_region_variances %>% ggplot(aes(x = variance)) +
