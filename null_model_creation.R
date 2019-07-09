@@ -20,5 +20,14 @@ variance_regions = c(2001:10001, 28900:32900, 50000:56200, 70000:72400, 90000:92
                      137700:138700, 204700:207300)
 
 #calculate the variance of those regions(tiles)
-
+variance_raw = variance_raw %>% mutate(tile = row_number())     #variance_row is calculated in blacklist_validation_plots
+variance_region_variances = variance_rwa %>% filter(tile %in% variance_regions)
+colnames(variance_region_variances) = c('variance','tile')
 #calculate the density of those variances
+variance_region_variances %>% ggplot(aes(x = variance)) +
+  geom_histogram(binwidth = 0.0001,aes(fill = (variance > 0.0127366 & variance < 0.0137781)))+
+  coord_cartesian(xlim = c(0,0.1))+theme_linedraw()+
+  ggtitle("variance null model: mean = 0.0137675, sd = 0.006562863, 1st Q=0.0127366, 2nd Q = 0.0132257 , 3rd Q = 0.0137781")
+mean(variance_region_variances$variance)
+sd(variance_region_variances$variance)
+summary(variance_region_variances$variance)
