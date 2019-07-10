@@ -22,11 +22,13 @@ library(factoextra)
 library(ggplot2)
 library(rbenchmark)
 library(Gmedian)
+library(ComplexHeatmap)
+
 library(tidyverse)
 set.seed(1024)
 numCores = detectCores()
 registerDoParallel(numCores-1)
-registerDoParallel(9)
+registerDoParallel(10)
 set.seed(1024)
 
 list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){
