@@ -24,7 +24,7 @@ colnames(coverage_raw) = "IQR"
 #calculate the sigma distanse of each tile variance from the variance null model---------------------------------
 
 variance_raw = variance_raw %>% mutate(var.sigma.dist = 
-                                         ((variance_raw$variance - mean(variance_region_variances$variance))/sd(variance_region_variances$variance)))
+                                         ((variance_raw$variance - median(variance_region_variances$variance))/sd(variance_region_variances$variance)))
 
 #calculating the sigma dist of each tile coverage from the coverage null model--------------------------------------
 #average over all coverage:
@@ -41,10 +41,10 @@ average_coverage = function(data){ #data here is tile_coverage matrix, with 110 
   print(time1)
   return(coverage_df)
 }
-a = average_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))
-coverage_raw = coverage_raw %>% mutate(average = (average_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))))
+coverage_raw = average_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))
+#coverage_raw = coverage_raw %>% mutate(average = (average_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))))
 coverage_raw = coverage_raw %>% mutate(cov.sigma.dist = 
-                                        ((coverage_raw$V1 - mean(variance_region_coverage$coverage))/sd(variance_region_coverage$coverage)))
+                                        ((coverage_raw$V1 - median(variance_region_coverage$coverage))/sd(variance_region_coverage$coverage)))
 
 #KMedian distance----------------------------------------------
 kmedian_distance_coverage = function(data){ #data here is tile_coverage matrix, with 110 rows
@@ -61,14 +61,14 @@ kmedian_distance_coverage = function(data){ #data here is tile_coverage matrix, 
           peak1 = density(coverage)$x[which(density(coverage)$y == max(density(coverage)$y))]
           coverage = (subdata %>% filter(clusters == 2))$cov
           peak2 = density(coverage)$x[which(density(coverage)$y == max(density(coverage)$y))]
-          return(c(peak1,peak2))
+          return(c(peak1[1],peak2[1]))
         }else{
           coverage = (subdata %>% 
             filter(clusters == which(table(subdata$clusters) == max(table(subdata$clusters)))))$cov
           peak1 = density(coverage)$x[which(density(coverage)$y == max(density(coverage)$y))]
           peak2 = (subdata %>% 
                      filter(clusters == which(table(subdata$clusters) == min(table(subdata$clusters)))))$cov
-          return(c(peak1,peak2))
+          return(c(peak1[1],peak2[1]))
       }
       }else(
         return(c(0,0))
@@ -122,6 +122,14 @@ for (i in 1:200) {
 file$tile$n.cov.variance = variance_raw$variance
 file$tile$n.cov.range = variance_raw$range
 file$tile$n.IQR = coverage_raw$IQR
-file$tile$n.var.sigma.dist = variance_raw$var.sigma.dist
-file$tile$n.cov.sigma.dist = coverage_raw$cov.sigma.dist
+file$tile$n.var.zscore = variance_raw$var.sigma.dist
+file$tile$n.cov.zscore = coverage_raw$cov.sigma.dist
 file$tile$n.peak.dist = kmedian_dist$peak_dist
+file$tile$blacklist.2 = as.factor(variance_raw$blacklist)
+
+saveRDS(file,"~/Codes/C3L-00004-hl5-augmented.rds")
+
+#facet_grid(chromosome ~ sample, scales="free_x") + aes(x=coordinat, y=logratio, color=variance)
+
+
+
