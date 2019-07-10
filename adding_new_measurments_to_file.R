@@ -124,4 +124,4 @@ file$tile$n.cov.range = variance_raw$range
 file$tile$n.IQR = coverage_raw$IQR
 file$tile$n.var.sigma.dist = variance_raw$var.sigma.dist
 file$tile$n.cov.sigma.dist = coverage_raw$cov.sigma.dist
-
+file$tile$n.peak.dist = kmedian_dist$peak_dist
