@@ -31,3 +31,20 @@ variance_region_variances %>% ggplot(aes(x = variance)) +
 mean(variance_region_variances$variance)
 sd(variance_region_variances$variance)
 summary(variance_region_variances$variance)
+
+
+
+#COVERAGE NULL MODEL -----------------------------------------------------------
+
+coverage_raw = coverage_raw %>% mutate(tile = row_number())     #variance_row is calculated in blacklist_validation_plots
+variance_region_coverage = coverage_raw %>% filter(tile %in% variance_regions)
+colnames(variance_region_coverage) = c('coverage','tile')
+
+#calculate the density of those coverage
+variance_region_coverage %>% ggplot(aes(x = coverage)) +
+  geom_histogram(binwidth = 0.001,aes(fill = (coverage > 0.3116 & coverage < 0.3171)))+
+  coord_cartesian(xlim = c(0,0.6))+theme_linedraw()+
+  ggtitle("coverage null model: mean = 0.3155561, sd = 0.1287049, 1st Q=0.3116, 2nd Q = 0.3145 , 3rd Q = 0.3171")
+mean(variance_region_coverage$coverage)
+sd(variance_region_coverage$coverage)
+summary(variance_region_coverage$coverage)
