@@ -1,7 +1,8 @@
 #heatmap of all normals
 mat = tile_cov_gc_normalized_227[1:5000,]
 mat = tile_lr[240051:249085,]
-
+mat = tile_lr[1:1000,]
+mat2 = tile_lr[1001:2000,]
 ht = Heatmap(mat,cluster_rows = F,show_row_dend = F,show_column_dend = F)
 draw(ht)
 
@@ -39,7 +40,7 @@ patient_num = 86
 p4 = lr_plot(patient_num)
 
 grid.arrange(p1,p2,p3,p4,nrow = 4)
-
+  
 getCovPlot <- function(stats, data, seg=FALSE, col=FALSE) {
   cov.plt <- with(stats, {
     plt <- ggplot(data)
