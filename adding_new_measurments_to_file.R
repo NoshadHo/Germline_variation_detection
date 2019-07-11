@@ -19,8 +19,9 @@ IQR_coverage = function(data){ #data here is tile_coverage matrix, with 110 rows
 }
 
 
-coverage_raw = IQR_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))
-colnames(coverage_raw) = "IQR"
+coverage_raw.IQR = IQR_coverage(as.data.frame(t(tile_cov_gc_normalized_227)))
+coverage_raw = coverage_raw %>% mutate(IQR = coverage_raw[,1])
+colnames(coverage_raw)[4] = "IQR"
 #calculate the sigma distanse of each tile variance from the variance null model---------------------------------
 
 variance_raw = variance_raw %>% mutate(var.sigma.dist = 
