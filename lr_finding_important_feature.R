@@ -3,7 +3,7 @@ setwd("~/Data/cnvex_normals/cnvex/")
 files = list.files()
 
 output = as.data.frame(matrix(nrow = 0,ncol = 8))
-for (i in 1:227){
+for (i in 171:227){
   print(i)
   #finding small segments (less than 5 tiles)
   file_num = i
@@ -36,9 +36,55 @@ for (i in 1:227){
 }
 save.image("~/Codes/Germline_variation_detection/data_july11.RData")
 
-# Fit the LASSO model (Lasso: Alpha = 1)
-cv.lasso <- cv.glmnet(x, y, alpha=1, parallel=TRUE, standardize=TRUE, type.measure='auc')
-coef(cv.lasso)
+#analysis of random forest results:
+
+#mean importance of each feature:
+output %>% group_by(features) %>% summarise(imp = mean(meanImp)) %>% arrange(desc(imp))
+
+#add confirmed as an factor for decision:
+output = output %>% mutate(confirmed = if_else(decision == "Confirmed",1,0))
+output %>% group_by(features) %>% mutate(wconf = confirmed*meanImp) %>% summarize(res = mean(wconf)) %>% arrange(desc(res))
+
+small_segments = (data_seg %>% filter(width < 50001))$seg
+data_small_segments = data %>% filter(seg %in% small_segments)
+
+
+#find the variability of each tile (its segment value) and then correlate it with other stuff
+tile_seg_lr = list()
+for (file_num in 1:(length(files))){ #can be potentially multithreat
+  file = read_rds(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+  tiles = as.data.frame(file$tile)
+  
+  data = tiles %>% 
+    select(seqnames,start,end,t.cov,n.cov,lr,seg)
+  data_seg = as.data.frame(file$seg) %>% mutate(seg = row_number()) %>% select(-strand)
+  data = data %>% left_join(data_seg,by = "seg")
+  data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
+  
+  tile_seg_lr[file_num] = data %>% select(seg_lr)
+  colnames_list[file_num] = files[file_num]
+  #sex[file_num,1] = file_num
+  #sex[file_num,2] = detect.sex(file$var,file$tile)
+  print(paste("File processed: ",file_num,"/",length(files),sep = ""))
+}
+tile_seg_lr = as.data.frame(matrix(unlist(tile_seg_lr),ncol = length(tile_seg_lr), byrow = FALSE))
+colnames(tile_seg_lr) = colnames_list
+
+variance_lr = variance_sex(as.data.frame(t(tile_seg_lr)))
+rfInput = variance_lr %>% mutate(n.cov.variance = variance_raw$variance)%>% mutate(n.cov.range = variance_raw$range) %>% 
+  mutate(n.IQR = coverage_raw$IQR) %>% mutate(n.var.zscore = variance_raw$var.sigma.dist) %>% mutate(n.cov.zscore = coverage_raw$cov.sigmaa.dist) %>% 
+  mutate(n.peak.dist = kmedian_dist$peak_dist) %>% mutate(blacklist.2 = variance_raw$blacklist)
+colnames(rfInput)[1] = "lr.seg.var"
+
+boruta = Boruta(lr.seg.var ~ .,data = rfInput, doTrace = 1, maxRuns = 50)
+names(boruta)
+getSelectedAttributes(boruta, withTentative = TRUE)
+roughFixMod <- TentativeRoughFix(boruta)
+imps <- attStats(roughFixMod)
+imps2 = imps[imps$decision != 'Rejected', c('meanImp', 'decision')]
+plot(boruta, cex.axis=.7, las=2, xlab="", main="Variable Importance")  
+
+
 # Fit random forrest
 boruta = Boruta(seg_lr ~ .,data = x, doTrace = 1)
 names(boruta)
