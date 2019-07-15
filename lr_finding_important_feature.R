@@ -76,7 +76,9 @@ rfInput = variance_lr %>% mutate(n.cov.variance = variance_raw$variance)%>% muta
   mutate(n.peak.dist = kmedian_dist$peak_dist) %>% mutate(blacklist.2 = variance_raw$blacklist)
 colnames(rfInput)[1] = "lr.seg.var"
 
-boruta = Boruta(lr.seg.var ~ .,data = rfInput, doTrace = 1, maxRuns = 50)
+save.image("~/Codes/Germline_variation_detection/data_july11.RData")
+boruta = Boruta(lr.seg.var ~ .,data = rfInput, doTrace = 1, maxRuns = 40)
+save.image("~/Codes/Germline_variation_detection/data_july11.RData")
 names(boruta)
 getSelectedAttributes(boruta, withTentative = TRUE)
 roughFixMod <- TentativeRoughFix(boruta)
@@ -84,6 +86,13 @@ imps <- attStats(roughFixMod)
 imps2 = imps[imps$decision != 'Rejected', c('meanImp', 'decision')]
 plot(boruta, cex.axis=.7, las=2, xlab="", main="Variable Importance")  
 
+
+a = as.data.frame(unique(variance_lr$V1))
+
+colnames(a) = 'V1'
+#####
+a %>% ggplot() +geom_density(aes(x = V1),binwidth = 0.0001)+ggtitle("Seg_lr_variance")
+#####
 
 # Fit random forrest
 boruta = Boruta(seg_lr ~ .,data = x, doTrace = 1)
