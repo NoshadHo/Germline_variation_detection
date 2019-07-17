@@ -28,11 +28,12 @@ lr_plot = function(patient_num = 10,file1){
   data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
   
   print(3)
-  p = data %>% filter(n.cov.variance > 0.025 & n.cov.variance < 10.1 & seqnames.x == 'chr10') %>% ggplot()+
+  p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == 'chr21') %>% ggplot()+
     facet_grid(.~seqnames.x, scales="free_x")+
-    geom_point(size = 0.3,aes(x = start.x,y = lr))+
+    geom_point(size = 0.3,aes(x = start.x,y = lr,color = blacklist.2))+
     geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
-    theme_linedraw()#+ggtitle("sample36-chr19-coord:whole Chr, No Weight")+coord_cartesian(ylim = c(-1,1),xlim = c(3e7,4e7))
+    theme_linedraw()+
+    ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+coord_cartesian(ylim = c(-1,1),xlim = c(9290001 ,42950000))
   
   return(p)
 }
@@ -40,16 +41,17 @@ file_num = 102
 file102 = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
 #14,25,101,86
 #45,36,41,49
+lr_plot(patient_num,cnv)
+p11 = lr_plot(patient_num,file25.weighted.nokernel)
+p22 = lr_plot(patient_num,file25.weighted.nokernel)
+p33 = lr_plot(patient_num,file25.weighted.nokernel)
+p44 = lr_plot(patient_num,file25.weighted.nokernel)
+p55 = lr_plot(patient_num,file25.weighted.nokernel)
+p66 = lr_plot(patient_num,file25.weighted.nokernel)
 
-p11 = lr_plot(patient_num,file67)
-p22 = lr_plot(patient_num,file102)
-p33 = lr_plot(patient_num,file36)
-p44 = lr_plot(patient_num,file45)
-p55 = lr_plot(patient_num,file49)
-p66 = lr_plot(patient_num,file25)
 p66_w = lr_plot(patient_num,file25.weighted)
-grid.arrange(p66,p66_w)
-grid.arrange(p11,p22,p33,p44,p55,p66,nrow = 6)
+grid.arrange(p11,p22,p33,nrow = 3)
+grid.arrange(p11,p22,p33,p44,p66,nrow = 5)
   
 patient_num = 25
 p1 = lr_plot(patient_num,file14)
@@ -75,7 +77,7 @@ grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,ncol = 2)
 
 
 #change the segmentation:
-cnv = file36
+cnv = file25
 cnv$tile$n.cov.variance = variance_raw$variance
 cnv$tile$n.cov.range = variance_raw$range
 cnv$tile$n.IQR = coverage_raw$IQR
@@ -99,25 +101,27 @@ variance.withkernel = function(cnv = file25,kernel = "Gaussian",k = 5, intial_se
   output = numeric()
   segments = split(cnv$tile,cnv$tile$seg)
   if (kernel == "Linear"){
-    time = system.time({foreach(i = 1:length(segments)) %dopar%{
+    time = system.time({new_var = foreach(i = 1:length(segments)) %dopar%{
+    #for (i in 1:length(segments)){
       segment = segments[[i]]
       variance_kernel = list()
-      if (length(segment) > k){
+      if (length(segment) > 2*k + 1){
         for (j in 1:length(segment)){
           window = as.data.frame(segment[((max(1,j-k)):min(length(segment),j+k))])
           weights = (c(1:k,k+1,(k):1)/(k+1))
           if (j < k+1){
-            window = window %>% mutate(weights = weights[(ceiling(length(weights)/2)-j+1):length(weights)])
+            window = window %>% mutate(weights = weights[(ceiling(length(weights)/2)-j+1):min(length(weights),length(segment))])
           }else if (j > length(segment)-k){
             window = window %>% mutate(weights = weights[1: min((length(weights)+(length(segment)-k)-j),length(segment))])
           }else{
             window = window %>% mutate(weights = weights)
           }
           variance_kernel[j] = window %>% transmute(weighted_variance = weights * n.cov.variance) %>% summarise(var = mean(weighted_variance))
-        }
+          #kprint(j)        
+          }
       }else{
         for (j in 1:length(segment)){
-          variance_kernel[j] = segment$n.cov.variance
+          variance_kernel[j] = segment$n.cov.variance[j]
         }
       }
       return(unlist(variance_kernel))
@@ -126,4 +130,79 @@ variance.withkernel = function(cnv = file25,kernel = "Gaussian",k = 5, intial_se
   }else if(kernel == "Gaussian"){
     
   }
+  output = unlist(new_var)
 }
+
+cnv$tile$lr.weight = (1/variance_raw$variance)
+file25.weighted.nokernel = addJointSegment(cnv,opts)
+
+cnv$tile$lr.weight = (1/output)
+file25.weighted.kernel = addJointSegment(cnv,opts)
+
+
+#measure:
+data = as.data.frame(cnv$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2)
+data_seg = as.data.frame(cnv$seg) %>% mutate(seg = row_number()) %>% select(-strand)
+data = data %>% left_join(data_seg,by = "seg")
+data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
+
+data = data %>% filter(n.cov.variance > 0.0025) %>% rowwise() %>% 
+  mutate(breakpoint.dist = min((start.x - start.y),(end.y - end.x)))
+
+a = (data$breakpoint.dist)
+a[a<0]
+
+data %>% filter(breakpoint.dist < 0) %>% select(-lr,-seg_lr,-blacklist.2,-seqnames.y) %>% group_by(seqnames.x,seg) %>% summarise(n())
+
+
+
+#calculate the pvalues of every 2 adjacent segments:---------------------------------------
+seg_count = length(cnv$seg)
+pvals.t = numeric()
+pvals.wc = numeric()
+for (i in 1:(seg_count-1)){
+  pvals.t[i] = t.test((cnv$tile$lr[cnv$tile$seg == i]),cnv$tile$lr[cnv$tile$seg == i+1])$p.value
+  pvals.wc[i] = wilcox.test((cnv$tile$lr[cnv$tile$seg == i]),cnv$tile$lr[cnv$tile$seg == i+1])$p.value
+  print(i)  
+}
+ggplot()+geom_histogram(aes(x = pvals.t),bins = 100)
+
+#index them
+pvals.t = as.data.frame(pvals.t) %>% mutate(seg = row_number())
+pvals.wc = as.data.frame(pvals.wc) %>% mutate(seg = row_number())
+
+pvals.t %>% filter(pvals.t > 0.05) %>% arrange(desc(pvals.t))
+
+as.data.frame(cnv$seg)[40:41,]
+
+#calculate the p-value of each segment, comparing with the null model of lr:------------------------
+
+seg_count = length(cnv$seg)
+null.pvals.t = numeric()
+for (i in 1:(seg_count)){
+  null.pvals.t[i] = t.test((cnv$tile$lr[cnv$tile$seg == i]),lr_null_regions$lr)$p.value
+  print(i)  
+}
+
+#now merge every 2 segment and measure the new p-value:
+null.pvals.t.2 = numeric()
+null.pvals.t.2.change = numeric()
+for (i in 1:(seg_count-1)){
+  new_seg = cnv$tile$lr[cnv$tile$seg == i | cnv$tile$seg == i+1]
+  null.pvals.t.2[i] = t.test(new_seg,lr_null_regions$lr)$p.value
+  null.pvals.t.2.change[i] = min(null.pvals.t[i+1],null.pvals.t[i]) - null.pvals.t.2[i]
+  null.pvals.t.2[i] = ifelse(null.pvals.t.2[i] < null.pvals.t[i] & null.pvals.t.2[i] < null.pvals.t[i+1],1,0)
+  print(i)  
+}
+
+#index them
+null.pvals.t = as.data.frame(null.pvals.t) %>% mutate(seg = row_number())
+null.pvals.t.2 = as.data.frame(null.pvals.t.2) %>% mutate(null.pvals.t.2.change) %>% mutate(seg = row_number())
+null.pvals.t.2 %>% arrange(desc(null.pvals.t.2.change))
+
+#compare with previous method, see how many of the selected segments are mutual: -----
+seg1 = pvals.t %>% filter(pvals.t > 0.05)
+seg1 = seg1$seg
+seg2 = null.pvals.t.2 %>% filter(null.pvals.t.2 == 1)
+seg2 = seg2$seg
+intersect(seg1,seg2)

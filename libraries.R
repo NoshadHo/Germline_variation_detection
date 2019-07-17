@@ -31,7 +31,7 @@ library(data.table)
 library(tidyverse)
 numCores = detectCores()
 registerDoParallel(numCores-1)
-registerDoParallel(10)
+registerDoParallel(8)
 set.seed(1024)
 
 list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){
@@ -40,7 +40,7 @@ list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){
 }
 
 as.data.frame(list_obj_sizes())
-rm(list = ls(pattern = "variance*"))
+rm(list = ls(pattern = "variance_df*"))
 base::load("~/Codes/Germline_variation_detection/data_june26.RData") 
 
 rm(repeat_file,repeat_file_short,svd)
