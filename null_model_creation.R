@@ -48,3 +48,10 @@ variance_region_coverage %>% ggplot(aes(x = coverage)) +
 mean(variance_region_coverage$coverage)
 sd(variance_region_coverage$coverage)
 summary(variance_region_coverage$coverage)
+
+#LR NULL MODEL --------------------------------------------------------------------
+lr_raw = tile_lr %>% select(lr = !!25)
+lr_raw = lr_raw %>% mutate(tile = row_number())     #variance_row is calculated in blacklist_validation_plots
+colnames(variance_region_coverage) = c('lr','tile')
+lr_null_regions = lr_raw %>% filter(tile %in% variance_regions)
+
