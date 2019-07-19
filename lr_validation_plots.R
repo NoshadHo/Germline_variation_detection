@@ -22,26 +22,36 @@ lr_plot = function(patient_num = 10,file1){
   file$tile$blacklist.2 = as.factor(variance_raw$blacklist)
   
   print(2)
-  data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2)
+  data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2,arm)
   data_seg = as.data.frame(file$seg) %>% mutate(seg = row_number()) %>% select(-strand)
   data = data %>% left_join(data_seg,by = "seg")
   data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
+  data = data %>% group_by(seg) %>% mutate(seg_lr_med = median(lr,na.rm = T)) %>% ungroup()
   
   print(3)
-  p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == 'chr21') %>% ggplot()+
+  p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == 'chr8') %>% ggplot()+
     facet_grid(.~seqnames.x, scales="free_x")+
     geom_point(size = 0.3,aes(x = start.x,y = lr,color = blacklist.2))+
     geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
     theme_linedraw()+
-    ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+coord_cartesian(ylim = c(-1,1),xlim = c(9290001 ,42950000))
+    #ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+
+    coord_cartesian(ylim = c(-1,1),xlim = c(77220001 ,78460000))+
+    geom_vline(xintercept = 1)
   
   return(p)
 }
-file_num = 102
-file102 = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+lr_plot(patient_num,cnv)
+segm = 2
+as.data.frame(cnv$seg)[segm:(segm+1),]
+as.data.frame(data) %>% group_by(seg) %>% dplyr::slice(1) %>% filter(seg %in% (segm):(segm+1)) %>% select(-seqnames.y) %>% mutate(width = width/1e4)
+
+
+
+file_num = 1
+file1 = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
 #14,25,101,86
 #45,36,41,49
-lr_plot(patient_num,cnv)
+
 p11 = lr_plot(patient_num,file25.weighted.nokernel)
 p22 = lr_plot(patient_num,file25.weighted.nokernel)
 p33 = lr_plot(patient_num,file25.weighted.nokernel)
@@ -77,7 +87,7 @@ grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,ncol = 2)
 
 
 #change the segmentation:
-cnv = file25
+cnv = file1
 cnv$tile$n.cov.variance = variance_raw$variance
 cnv$tile$n.cov.range = variance_raw$range
 cnv$tile$n.IQR = coverage_raw$IQR
@@ -88,7 +98,7 @@ cnv$tile$blacklist.2 = as.factor(variance_raw$blacklist)
 cnv$tile$lr.weight = (1/variance_raw$variance)
 cnv$tile$seg = NULL
 cnv$seg = NULL
-file25.weighted = addJointSegment(cnv,opts)
+cnv = addJointSegment(cnv,opts)
     
 #calculate the distance of each tile to the nearest breakpoint
 
@@ -173,7 +183,10 @@ pvals.wc = as.data.frame(pvals.wc) %>% mutate(seg = row_number())
 
 pvals.t %>% filter(pvals.t > 0.05) %>% arrange(desc(pvals.t))
 
-as.data.frame(cnv$seg)[40:41,]
+segm = 120
+as.data.frame(cnv$seg)[segm:(segm+1),]
+
+as.data.frame(data) %>% group_by(seg) %>% dplyr::slice(1) %>% filter(seg %in% segm:(segm+1)) %>% select(-seqnames.y)
 
 #calculate the p-value of each segment, comparing with the null model of lr:------------------------
 
@@ -206,3 +219,4 @@ seg1 = seg1$seg
 seg2 = null.pvals.t.2 %>% filter(null.pvals.t.2 == 1)
 seg2 = seg2$seg
 intersect(seg1,seg2)
+setdiff(seg2,seg1)
