@@ -159,8 +159,6 @@ getTargetTiles <- function(tgt.fn, opts) {
     }
     n.points.baf <- sum(!is.na(arm.baf))
     if (n.points.baf >= 2*len.min) {
-      print(length(arm.baf.weight))
-      print(dim(arm.baf.weight))
       seg0.baf <- .runCBS(arm.baf, arm.baf.weight, args=cbs.baf)
     } else {
       seg0.baf <- c()
