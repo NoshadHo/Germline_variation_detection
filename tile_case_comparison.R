@@ -11,7 +11,7 @@ library(foreach)
 library(doParallel)
 set.seed(1024)
 numCores = detectCores()
-registerDoParallel(numCores-1)
+registerDoParallel(10)
 
 
 #DETECTING SEX OF PATIENT----------------------------------------------------------------------------------------------------------------------
