@@ -29,9 +29,10 @@ library(caret)
 library(jointseg)
 library(data.table)
 library(tidyverse)
+library(sigmoid)
 numCores = detectCores()
 registerDoParallel(numCores-1)
-registerDoParallel(8)
+registerDoParallel(10)
 set.seed(1024)
 
 list_obj_sizes <- function(list_obj=ls(envir=.GlobalEnv)){
