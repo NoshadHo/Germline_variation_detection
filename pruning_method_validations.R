@@ -70,6 +70,28 @@
           lr.diff <  (sd.lr +  sd.lr * max(len.penalty,max.lr.var)) &
             baf.diff < sd.baf + sd.baf * len.penalty
         ), seg]
+      }else if (algo == 6){#sigmoid
+        a = 0.02
+        b = 0.08
+        stat0[max.lr.var < a, max.lr.var:= 0]
+        stat0[max.lr.var > b, max.lr.var:= 1]
+        stat0[max.lr.var < b & max.lr.var > a, max.lr.var:= sigmoid_func(max.lr.var)]
+        
+        seg1 <- stat0[(
+          lr.diff <  (sd.lr +  sd.lr * max(len.penalty,max.lr.var)) &
+            baf.diff < sd.baf + sd.baf * len.penalty
+        ), seg]
+      }else if (algo == 7){#step
+        a = 0.02
+        b = 0.08
+        stat0[max.lr.var < a, max.lr.var:= 0]
+        stat0[max.lr.var > a, max.lr.var:= 1]
+        
+        
+        seg1 <- stat0[(
+          lr.diff <  (sd.lr +  sd.lr * max(len.penalty,max.lr.var)) &
+            baf.diff < sd.baf + sd.baf * len.penalty
+        ), seg]
       }else{ #this is the default
         seg1 <- stat0[(
           lr.diff <  sd.lr +  sd.lr * len.penalty &
@@ -207,12 +229,13 @@
   }
   
   
+  variance_raw = read_rds("~/Codes/Germline_variation_detection/variance_raw.RDS")
   
   files = list.files()
-  algo_performance_4_5 = foreach (file_num = 1:227) %dopar% {
+  algo_performance = foreach (file_num = 1:227) %dopar% {
     #print(paste("[1.1] Start Reading:", file_num))
     time1 = system.time({
-      file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+      file = read_rds(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
     })
     #print(paste("[1.2] Reading time:", as.numeric(time1)[3]))
     #print(paste("[2.1] Start Processing:", file_num))
@@ -223,28 +246,34 @@
       # algo1 = pruned_percent(file,1)
       # algo2 = pruned_percent(file,2)
       # algo3 = pruned_percent(file,3)
-      algo4 = pruned_percent(file,4)
-      algo5 = pruned_percent(file,5)
-      
+      # algo4 = pruned_percent(file,4)
+      # algo5 = pruned_percent(file,5)
+       algo6 = pruned_percent(file,6)
+       algo7 = pruned_percent(file,7)
+        
       # algo0_percent = algo0[1]
       # algo1_percent = algo1[1]
       # algo2_percent = algo2[1]
       # algo3_percent = algo3[1]
-      algo4_percent = algo4[1]
-      algo5_percent = algo5[1]
+      # algo4_percent = algo4[1]
+      # algo5_percent = algo5[1]
+       algo6_percent = algo6[1]
+       algo7_percent = algo7[1]
       
       # algo0_dist = algo0[2]
       # algo1_dist = algo1[2]
       # algo2_dist = algo2[2]
       # algo3_dist = algo3[2]
-      algo4_dist = algo4[2]
-      algo5_dist = algo5[2]
-      
+      # algo4_dist = algo4[2]
+      # algo5_dist = algo5[2]
+       algo6_dist = algo6[2]
+       algo7_dist = algo7[2]
+        
       cat(as.character(file_num),file="progress.txt",sep="\n",append=TRUE)
       
       # return(c(algo0_percent,algo1_percent,algo2_percent,algo3_percent,algo4_percent,
       #          algo0_dist,algo1_dist,algo2_dist,algo3_dist,algo4_dist))
-      return(c(algo4_percent,algo5_percent, algo4_dist, algo5_dist))
+      return(c(algo6_percent,algo7_percent, algo6_dist,algo7_dist))
     })
     #print(paste("[2.2] Processing time:", as.numeric(time2)[3],'\n'))
   }
@@ -253,7 +282,7 @@
                                     "algo0_dist","algo1_dist","algo2_dist","algo3_dist","algo4_dist")
   
   #percentage boxplot
-  algo_percentages = algo_performance_df %>% select(algo0_percent:algo4_percent,algo5_percent)  
+  algo_percentages = algo_performance_df %>% select(algo0_percent:algo4_percent,algo5_percent,algo6_percent,algo7_percent)  
   algo_percentages = algo_percentages %>% gather(value = percent,key = type)  
   p_meds <- algo_percentages %>% summarise_all(median)
   p_meds = p_meds %>% gather(key = type, value = median)
@@ -261,13 +290,75 @@
                                                                                                                               size = 4.5, vjust = -1.5)
   
   #dist distribution
-  algo_dist = algo_performance_df %>% select(algo0_dist:algo4_dist,algo5_dist)  
+  algo_dist = algo_performance_df %>% select(algo0_dist:algo4_dist,algo5_dist,algo6_dist,algo7_dist)  
   algo_dist = algo_dist %>% gather(value = dist,key = type)  
   p_meds <- algo_dist %>% summarise_all(median)
   p_meds = p_meds %>% gather(key = type, value = median)
   algo_dist %>% ggplot(aes(x = type,y = dist))+geom_violin()+geom_boxplot(fill = "gold")+theme_linedraw()+theme_linedraw()+geom_text(data = p_meds,aes(x = type, y = median, label = median), 
                                                                                                                                      size = 4.5, vjust = -1.5)
+  #define the specificity to sensitivity measure
+  #calculating the difference from algo0:
+  #method1--------------------------------
+  algo_percentages_med = algo_percentages %>% summarise_all(median)
+  algo_dist_med = algo_dist %>% summarise_all(median)
   
+  algo_percentages_med_diff = algo_percentages_med - algo_percentages_med$algo0_percent
+  algo_dist_med_diff = algo_dist_med - algo_dist_med$algo0_dist
+  algo_percentages_med_diff$algo0_percent = NULL
+  algo_dist_med_diff$algo0_dist = NULL
+  
+  algo_dist_med_diff$algo1_dist = NULL
+  algo_percentages_med_diff$algo1_percent = NULL
+  a = scale(as.numeric(algo_dist_med_diff))
+  b = scale(as.numeric(algo_percentages_med_diff))
+  a/b
+  #method2-------------------------------- 
+  algo_percentages_diff = algo_percentages - algo_percentages$algo0_percent
+  algo_dist_diff = algo_dist - algo_dist$algo0_dist
+  
+  algo_dist_diff$algo0_dist = NULL
+  algo_percentages_diff$algo0_percent = NULL
+  
+  algo_percentages_diff = scale(algo_percentages_diff)
+  algo_dist_diff = scale(algo_dist_diff)
+  
+  algo_percentages_diff_gather = gather(as.data.frame(algo_percentages_diff), key = method, value = percent)
+  algo_dist_diff_gather = gather(as.data.frame(algo_dist_diff), key = method, value = percent)
+  
+  #compare not normalized with normalized
+  p1 = algo_percentages_diff_gather %>% ggplot()+geom_density(aes(x = percent))+facet_grid(method~.)
+  p2 = algo_percentages %>% ggplot()+geom_density(aes(x = percent))+facet_grid(type~.)
+  grid.arrange(p1,p2,nrow = 1)
+  
+  a = algo_dist_diff_gather$percent/algo_percentages_diff_gather$percent
+  b = algo_percentages_diff_gather %>% select(method) %>% mutate(value = a)
+  #boxplot:
+  b %>% ggplot()+geom_violin(aes(x = method,y = value))+geom_boxplot(aes(x = method,y = value),fill = "maroon")+theme_linedraw()+coord_cartesian(ylim = c(-3,3))
+  b %>% group_by(method) %>% summarise(a = median(value)) %>% arrange(desc(a))
+  #method3-----------------------------------
+  scaled_percent = as.data.frame(scale(algo_percentages))
+  scaled_dist = as.data.frame(scale(algo_dist))
+  
+  scaled_percent_diff = scaled_percent - scaled_percent$algo0_percent
+  scaled_dist_diff = scaled_dist - scaled_dist$algo0_dist
+  
+  scaled_percent_diff$algo0_percent = NULL
+  scaled_dist_diff$algo0_dist = NULL
+  
+  scaled_percent_diff_gather = gather(as.data.frame(scaled_percent_diff), key = method, value = percent)
+  scaled_dist_diff_gather = gather(as.data.frame(scaled_dist_diff), key = method, value = percent)
+  
+  a = scaled_dist_diff_gather$percent/scaled_percent_diff_gather$percent
+  b = scaled_percent_diff_gather %>% select(method) %>% mutate(value = a)
+  b %>% ggplot()+geom_violin(aes(x = method,y = value))+geom_boxplot(aes(x = method,y = value),fill = "maroon")+theme_linedraw()+coord_cartesian(ylim = c(-3,3))
+  colnames(b)[2] = "val"
+  b %>% group_by(method) %>% summarise(a = median(val)) %>% arrange(desc(a))
+  ##########-----------------------------------------
+  #scaling:
+  algo_performance_scaled = scale(algo_performance_df)
+  #how much difference from 
+  
+  sp_sen_measure = algo_performance_scaled$
   #penalty per n.cov.variance plots
   x = seq(0.01,1.2,by = 0.001)
   y1 = 0
@@ -281,3 +372,15 @@
   
   p4 = ggplot()+geom_point(aes(x = x, y = y4))+xlim(0,0.25)+ylim(-0.5,1.5)+ggtitle("algorithm 4")
   grid.arrange(p1,p2,p3,p4)
+  
+  sigmoid_func = function(x){
+    return(1/(1 + exp(-((x-0.05)*200))))
+  }
+  plot(sigmoid_func,0.02, 0.08)  
+  
+  
+  ###########################################test---------------------------
+  a = rnorm(10000,0,1)
+  ggplot()+geom_density(aes(x = a))
+  b = rnorm(10000,0,1)
+  
