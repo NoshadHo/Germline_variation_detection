@@ -298,6 +298,16 @@
                                                                                                                                      size = 4.5, vjust = -1.5)
   #define the specificity to sensitivity measure
   #calculating the difference from algo0:
+  #method 0 -> raw form
+  algo_percentages_med = algo_percentages %>% summarise_all(median)
+  algo_dist_med = algo_dist %>% summarise_all(median)
+  
+  algo_percentages_med_diff = algo_percentages_med - algo_percentages_med$algo0_percent
+  algo_dist_med_diff = algo_dist_med - algo_dist_med$algo0_dist
+  algo_percentages_med_diff$algo0_percent = NULL
+  algo_dist_med_diff$algo0_dist = NULL
+  
+  algo_dist_med_diff/algo_percentages_med_diff
   #method1--------------------------------
   algo_percentages_med = algo_percentages %>% summarise_all(median)
   algo_dist_med = algo_dist %>% summarise_all(median)

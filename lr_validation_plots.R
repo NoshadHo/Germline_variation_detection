@@ -8,47 +8,49 @@ draw(ht)
 
 
 #plot lr vs coordinates:
-lr_plot = function(patient_num = 10,file1){
+lr_plot = function(patient_num = 10,file1,start,end,chr){
   file_num = patient_num
   #file = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
   file = file1
   print(1)
   file$tile$n.cov.variance = variance_raw$variance
-  file$tile$n.cov.range = variance_raw$range
-  file$tile$n.IQR = coverage_raw$IQR
-  file$tile$n.var.zscore = variance_raw$var.sigma.dist
-  file$tile$n.cov.zscore = coverage_raw$cov.sigma.dist
-  file$tile$n.peak.dist = kmedian_dist$peak_dist
+  # file$tile$n.cov.range = variance_raw$range
+  # file$tile$n.IQR = coverage_raw$IQR
+  # file$tile$n.var.zscore = variance_raw$var.sigma.dist
+  # file$tile$n.cov.zscore = coverage_raw$cov.sigma.dist
+  # file$tile$n.peak.dist = kmedian_dist$peak_dist
   file$tile$blacklist.2 = as.factor(variance_raw$blacklist)
   
   print(2)
-  data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2,arm)
+  # data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2,arm)
+  data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,seg,arm,blacklist.2)
   data_seg = as.data.frame(file$seg) %>% mutate(seg = row_number()) %>% select(-strand)
   data = data %>% left_join(data_seg,by = "seg")
   data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
   data = data %>% group_by(seg) %>% mutate(seg_lr_med = median(lr,na.rm = T)) %>% ungroup()
   
   print(3)
-  p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == 'chr8') %>% ggplot()+
+  p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == chr) %>% ggplot()+
     facet_grid(.~seqnames.x, scales="free_x")+
-    geom_point(size = 0.3,aes(x = start.x,y = lr,color = blacklist.2))+
+    geom_point(size = 0.3,aes(x = start.x,y = lr, color = n.cov.variance > 0.02))+
     geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
     theme_linedraw()+
     #ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+
-    coord_cartesian(ylim = c(-1,1),xlim = c(77220001 ,78460000))+
+    coord_cartesian(ylim = c(-1,1),xlim = c(start,end))+
     geom_vline(xintercept = 1)
   
   return(p)
 }
-lr_plot(patient_num,cnv)
+p14_1_pool = lr_plot(patient_num,cnv,7.5e7,7.6e7,'chr3')
+
 segm = 2
 as.data.frame(cnv$seg)[segm:(segm+1),]
 as.data.frame(data) %>% group_by(seg) %>% dplyr::slice(1) %>% filter(seg %in% (segm):(segm+1)) %>% select(-seqnames.y) %>% mutate(width = width/1e4)
 
+grid.arrange(p14_1_tn,p14_1_pool,p14_2_tn,p14_2_pool,p14_3_tn,p14_3_pool, ncol = 2)
 
-
-file_num = 1
-file1 = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+file_num = 14
+cnv = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
 #14,25,101,86
 #45,36,41,49
 
