@@ -49,8 +49,12 @@ files = list.files()
 
 pd <- list(cov=cov, sex=as.list(sex), sex.chr=sex.chr, target=target)
 
-pool <- .createPool(pd, opts)
-cnv$tile$lr = .poolPcaDenoise(cnv, pool, opts)
+opts$pool.method="ica"
+pool_ica_rm <- .createPool(pd, opts)
+cnv_pca = cnv_org
+cnv_ica = cnv_org
+cnv_pca$tile$lr = .poolPcaDenoise(cnv_org, pool_pca, opts)
+cnv_ica$tile$lr = .poolIcaDenoise(cnv_org, pool_ica, opts)
 ###########
 .createPool <- function(pd, opts) {
   filter <- .poolFilter(pd$cov, pd$sex, pd$target, opts$pool.lo.cov, opts$pool.hi.cov, opts$pool.hi.zero)

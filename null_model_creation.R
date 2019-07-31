@@ -25,7 +25,7 @@ variance_region_variances = variance_raw %>% filter(tile %in% variance_regions)
 colnames(variance_region_variances) = c('variance','tile')
 #calculate the density of those variances
 variance_region_variances %>% ggplot(aes(x = variance)) +
-  geom_histogram(binwidth = 0.0001,aes(fill = (variance > 0.012000 & variance < 0.02)))+
+  geom_histogram(binwidth = 0.0001,aes(fill = (variance > 0.00012000 & variance < 0.018)))+
   coord_cartesian(xlim = c(0,0.1))+theme_linedraw()+
   ggtitle("variance null model: mean = 0.0137675, sd = 0.006562863, 1st Q=0.0127366, 2nd Q = 0.0132257 , 3rd Q = 0.0137781")
 mean(variance_region_variances$variance)

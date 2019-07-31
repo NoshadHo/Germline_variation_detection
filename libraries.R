@@ -1,5 +1,5 @@
-library(GenomicRanges)
 library(cnvex) #this is a local library, might not work on other machines
+library(GenomicRanges)
 library(rlist)
 library(gplots)
 library(cluster)    # clustering algorithms
@@ -31,6 +31,8 @@ library(data.table)
 library(tidyverse)
 library(sigmoid)
 library(matrixStats)
+library(fastICA)
+library(MASS)
 numCores = detectCores()
 registerDoParallel(numCores-1)
 registerDoParallel(10)

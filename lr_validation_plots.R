@@ -23,8 +23,8 @@ lr_plot = function(patient_num = 10,file1,start,end,chr){
   
   print(2)
   # data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,n.peak.dist,seg,blacklist.2,arm)
-  data = as.data.frame(file$tile) %>% select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,seg,arm,blacklist.2)
-  data_seg = as.data.frame(file$seg) %>% mutate(seg = row_number()) %>% select(-strand)
+  data = as.data.frame(file$tile) %>% dplyr::select(seqnames,start,end,t.cov,n.cov,lr,n.cov.variance,seg,arm,blacklist.2)
+  data_seg = as.data.frame(file$seg) %>% mutate(seg = row_number()) %>% dplyr::select(-strand)
   data = data %>% left_join(data_seg,by = "seg")
   data = data %>% group_by(seg) %>% mutate(seg_lr = mean(lr,na.rm = T)) %>% ungroup()
   data = data %>% group_by(seg) %>% mutate(seg_lr_med = median(lr,na.rm = T)) %>% ungroup()
@@ -32,16 +32,25 @@ lr_plot = function(patient_num = 10,file1,start,end,chr){
   print(3)
   p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == chr) %>% ggplot()+
     facet_grid(.~seqnames.x, scales="free_x")+
-    geom_point(size = 0.3,aes(x = start.x,y = lr, color = n.cov.variance > 0.02))+
+    geom_point(size = 0.3,aes(x = start.x,y = lr, color = n.cov.variance > 0.020))+
     geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
     theme_linedraw()+
     #ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+
-    coord_cartesian(ylim = c(-1,1),xlim = c(start,end))+
+    coord_cartesian(ylim = c(-2,2),xlim = c(start,end))+
     geom_vline(xintercept = 1)
   
   return(p)
 }
-p14_1_pool = lr_plot(patient_num,cnv,7.5e7,7.6e7,'chr3')
+lr_plot(patient_num,new_cnv,7.5e7,8e7,'chr3')
+
+##------TEMP------------------
+##to select points with norm variance of more than 0.02 from no pool, rest frompool
+#then re segment,
+# then plot
+new_cnv = cnv_ica
+new_cnv$tile$lr = if_else(cnv_org$tile$n.cov.variance < 0.02, cnv_ica$tile$lr, cnv_org$tile$lr)
+new_cnv = addJointSegment(new_cnv, opts, 0)
+##
 
 segm = 2
 as.data.frame(cnv$seg)[segm:(segm+1),]
@@ -50,7 +59,7 @@ as.data.frame(data) %>% group_by(seg) %>% dplyr::slice(1) %>% filter(seg %in% (s
 grid.arrange(p14_1_tn,p14_1_pool,p14_2_tn,p14_2_pool,p14_3_tn,p14_3_pool, ncol = 2)
 
 file_num = 14
-cnv = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+cnv_org = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
 #14,25,101,86
 #45,36,41,49
 
@@ -222,3 +231,22 @@ seg2 = null.pvals.t.2 %>% filter(null.pvals.t.2 == 1)
 seg2 = seg2$seg
 intersect(seg1,seg2)
 setdiff(seg2,seg1)
+
+##--------------------------Measuring variance around a couple of selected segments for pca ica and matched tumor normal--------------
+as.data.frame(cnv_pca$seg) %>% mutate(seg = row_number()) %>% filter(seqnames == "chr12") #selecting using this code
+#selecting the seg:
+cnv_org$tile$n.cov.variance = variance_raw$variance
+seg1_tn = cnv_org$tile$lr[cnv_org$tile$seg == 260 & cnv_org$tile$n.cov.variance < 0.02] #seg15 on original cnv
+seg1_ica = cnv_ica$tile$lr[cnv_ica$tile$seg == 428 & cnv_ica$tile$n.cov.variance < 0.02] #seg25 on ica cnv
+seg1_pca = cnv_pca$tile$lr[cnv_pca$tile$seg == 418 & cnv_pca$tile$n.cov.variance < 0.02] #seg25 on pca cnv
+sd(seg1_tn,na.rm = TRUE)
+sd(seg1_ica,na.rm = TRUE)
+sd(seg1_pca,na.rm = TRUE)
+
+#second seg
+seg2_tn = cnv_org$tile$lr[cnv_org$tile$seg == 58] #seg15 on original cnv
+seg2_ica = cnv_ica$tile$lr[cnv_ica$tile$seg == 79] #seg25 on ica cnv
+seg2_pca = cnv_pca$tile$lr[cnv_pca$tile$seg == 198] #seg25 on pca cnv
+sd(seg2_tn,na.rm = TRUE)
+sd(seg2_ica,na.rm = TRUE)
+sd(seg2_pca,na.rm = TRUE)

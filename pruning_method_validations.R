@@ -242,38 +242,38 @@
     time2 = system.time({
       file$tile$n.cov.variance = variance_raw$variance
       
-      # algo0 = pruned_percent(file,0)
-      # algo1 = pruned_percent(file,1)
-      # algo2 = pruned_percent(file,2)
-      # algo3 = pruned_percent(file,3)
-      # algo4 = pruned_percent(file,4)
-      # algo5 = pruned_percent(file,5)
-       algo6 = pruned_percent(file,6)
-       algo7 = pruned_percent(file,7)
+       algo0 = pruned_percent(file,0)
+      algo1 = pruned_percent(file,1)
+      algo2 = pruned_percent(file,2)
+      algo3 = pruned_percent(file,3)
+      algo4 = pruned_percent(file,4)
+      algo5 = pruned_percent(file,5)
+      algo6 = pruned_percent(file,6)
+      algo7 = pruned_percent(file,7)
         
-      # algo0_percent = algo0[1]
-      # algo1_percent = algo1[1]
-      # algo2_percent = algo2[1]
-      # algo3_percent = algo3[1]
-      # algo4_percent = algo4[1]
-      # algo5_percent = algo5[1]
-       algo6_percent = algo6[1]
-       algo7_percent = algo7[1]
+      algo0_percent = algo0[1]
+      algo1_percent = algo1[1]
+      algo2_percent = algo2[1]
+      algo3_percent = algo3[1]
+      algo4_percent = algo4[1]
+      algo5_percent = algo5[1]
+      algo6_percent = algo6[1]
+      algo7_percent = algo7[1]
       
-      # algo0_dist = algo0[2]
-      # algo1_dist = algo1[2]
-      # algo2_dist = algo2[2]
-      # algo3_dist = algo3[2]
-      # algo4_dist = algo4[2]
-      # algo5_dist = algo5[2]
-       algo6_dist = algo6[2]
-       algo7_dist = algo7[2]
+      algo0_dist = algo0[2]
+      algo1_dist = algo1[2]
+      algo2_dist = algo2[2]
+      algo3_dist = algo3[2]
+      algo4_dist = algo4[2]
+      algo5_dist = algo5[2]
+      algo6_dist = algo6[2]
+      algo7_dist = algo7[2]
         
       cat(as.character(file_num),file="progress.txt",sep="\n",append=TRUE)
       
-      # return(c(algo0_percent,algo1_percent,algo2_percent,algo3_percent,algo4_percent,
-      #          algo0_dist,algo1_dist,algo2_dist,algo3_dist,algo4_dist))
-      return(c(algo6_percent,algo7_percent, algo6_dist,algo7_dist))
+       return(c(algo0_percent,algo1_percent,algo2_percent,algo3_percent,algo4_percent,algo5_percent,algo6_percent,algo7_percent
+                algo0_dist,algo1_dist,algo2_dist,algo3_dist,algo4_dist,algo5_dist,algo6_dist,algo7_dist))
+      # return(c(algo6_percent,algo7_percent, algo6_dist,algo7_dist))
     })
     #print(paste("[2.2] Processing time:", as.numeric(time2)[3],'\n'))
   }
