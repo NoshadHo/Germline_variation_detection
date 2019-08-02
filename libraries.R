@@ -49,3 +49,6 @@ base::load("~/Codes/Germline_variation_detection/data_june26.RData")
 
 rm(repeat_file,repeat_file_short,svd)
 rm(tile_modal,ttile_modal,subdata,tile_coverage,right_form_of_data,sample)
+
+
+rm(p14_pool,p14_tn,p36_tn,p36_pool,new_cnv,cnv_pca,cnv_org,cnv_ica)

@@ -32,17 +32,17 @@ lr_plot = function(patient_num = 10,file1,start,end,chr){
   print(3)
   p = data %>% filter(n.cov.variance > 0.00025 & n.cov.variance < 100.1 & seqnames.x == chr) %>% ggplot()+
     facet_grid(.~seqnames.x, scales="free_x")+
-    geom_point(size = 0.3,aes(x = start.x,y = lr, color = n.cov.variance > 0.020))+
-    geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
-    theme_linedraw()+
+    geom_point(size = 0.3,aes(x = start.x,y = n.cov, color = n.cov.variance > 0.020))+
+    #geom_segment(aes(x = start.y,xend = end.y,y = seg_lr,yend = seg_lr),colour = 'red')+
+    #theme_linedraw()+
     #ggtitle("sample25-chr5-, weight and No Weight, pval_diff = 5.815507e-10")+
     coord_cartesian(ylim = c(-2,2),xlim = c(start,end))+
     geom_vline(xintercept = 1)
   
   return(p)
 }
-lr_plot(patient_num,new_cnv,7.5e7,8e7,'chr3')
-
+lr_plot(patient_num,cnv_org_37,1,8e7,c('chr22','chrX',"chrY"))
+detect.sex(tile = cnv_org_10$tile, cnv_org_10$var)
 ##------TEMP------------------
 ##to select points with norm variance of more than 0.02 from no pool, rest frompool
 #then re segment,
@@ -58,8 +58,9 @@ as.data.frame(data) %>% group_by(seg) %>% dplyr::slice(1) %>% filter(seg %in% (s
 
 grid.arrange(p14_1_tn,p14_1_pool,p14_2_tn,p14_2_pool,p14_3_tn,p14_3_pool, ncol = 2)
 
-file_num = 14
-cnv_org = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
+
+file_num = 37
+cnv_org_37 = readRDS(paste("./",files[file_num],"/",files[file_num],".rds",sep = ""))   #use read_rds from readr next time
 #14,25,101,86
 #45,36,41,49
 
@@ -250,3 +251,8 @@ seg2_pca = cnv_pca$tile$lr[cnv_pca$tile$seg == 198] #seg25 on pca cnv
 sd(seg2_tn,na.rm = TRUE)
 sd(seg2_ica,na.rm = TRUE)
 sd(seg2_pca,na.rm = TRUE)
+
+
+####
+as.data.frame(cnv_org$tile) %>% filter(seqnames == "chrX") %>% filter(is.na(lr)) %>% summarize(num =n())
+as.data.frame(cnv_org_2$tile) %>% filter(seqnames == "chrX") %>% filter(is.na(lr)) %>% summarize(num = n())
