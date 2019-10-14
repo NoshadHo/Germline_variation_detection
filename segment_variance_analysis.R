@@ -51,11 +51,14 @@ box = box_data %>% ggplot() + geom_boxplot(aes(x = key, y = value), fill = c("#E
 
 ## PC_NUMBERS EFFECT -----------------------------------------
 # load the pool data
-pd = read_rds("/data/pools/agi.v4.pca.V2.pd.rds")
-pool = read_rds("/data/pools/agi.v4.pca.V2.pool.rds")
-PC_SIZES = seq(5,300,5)
+set.seed(1024)
+pd = read_rds("/mctp/users/noshadh/data/pools/agi.v4.pca.V2.pd.rds")
+pool = read_rds("/mctp/users/noshadh/data/pools/agi.v4.pca.V2.pool.rds")
+PC_SIZES = seq(5,10,1)
+NVAR_THR = seq(5,12,1)
+PATIENT_NUM = seq(5,length(olds),10)
 opts = OPTS #(set opts accordingly)
-opts$pool.hi.nvar = 10
+opts$pool.hi.nvar = 8
 
 #copying createpool code, so we can run it faster by some modifications
 filter.female <- pool$female$filter
@@ -70,10 +73,12 @@ lr.male <- .medianLogRatio(cov.male, pd$target, filter.male, pd$sex.chr)
 mc.male <- .medianCoverage(cov.male, pd$sex.chr)
 
 #for all the samples:
-agi.v4.files = read_delim(delim = "\n", file = "/data/cohorts/agi.v4.samples.txt", col_names = F)
+agi.v4.files = read_delim(delim = "\n", file = "/mctp/users/noshadh/data/cohorts/agi.v4.samples.txt", col_names = F)
 olds = agi.v4.files$X1
-news = paste0("/data/WXS/rerun1", substr(olds, start = 18, stop = nchar(olds)))
+news = paste0("/mctp/users/noshadh/data/WXS/rerun1", substr(olds, start = 18, stop = nchar(olds)))
+olds = paste0("/mctp/users/noshadh", olds)
 
+## functions****************
 #modified segmentation
 addJointSegmentModif <- function(cnv, opts) {
   tile = cnv$tile
@@ -126,17 +131,15 @@ reAdjustCNV <- function(cnv,pool,opts) {
   cnv <- addSmoothLogRatio(cnv, opts)
   
   ## segmentation
-  registerDoParallel(cores = 10)
   cnv <- addJointSegmentModif(cnv, opts)
-  stopImplicitCluster()
   return(cnv)
 }
 
 calcSd <- function(pool,opts) {
   list = foreach(i = 1:length(olds)) %dopar% {
     cnv_old = read_rds(olds[i])
-    cnv_new = read_rds(news[i])
-    # cnv_new = reAdjustCNV(cnv_old,pool,opts)
+    # cnv_new = read_rds(news[i])
+    cnv_new = reAdjustCNV(cnv_old,pool,opts)
     
     seg_tiles <- queryHits(findOverlaps(cnv_old$tile,cnv_old$seg))
     seg_ids <- subjectHits(findOverlaps(cnv_old$tile,cnv_old$seg))
@@ -158,21 +161,14 @@ calcSd <- function(pool,opts) {
   return(seg_means)
 }
 
-run <- function(){
-  # res = foreach(i = 1:3) %dopar% {
-  #   opts$pool.n.comp = PC_SIZES[i]
-  #   pool = modifyPool(pool,opts)
-  #   seg_means = calcSd(pool,opts)
-  #   cat(as.character(i),file="/data/progress.txt",sep="\n",append=TRUE)
-  #   # return(c(median(seg_means[,1],na.rm = T),median(seg_means[,2],na.rm = T)))
-  #   return(c(seg_means[,1],seg_means[,2]))
-  # }
+runPcSize <- function(){
   res = lapply(X = 1:length(PC_SIZES), FUN = function(X){
     opts$pool.n.comp = PC_SIZES[X]
-    pool = modifyPool(pool,opts)
+    # pool = modifyPool(pool,opts)
     seg_means = calcSd(pool,opts)
-    cat(as.character(i),file="/data/progress.txt",sep="\n",append=TRUE)
+    cat(as.character(X),file="/mctp/users/noshadh/data/progress.txt",sep="\n",append=TRUE)
     # return(c(median(seg_means[,1],na.rm = T),median(seg_means[,2],na.rm = T)))
+    # list(old = seg_means[,1], new = seg_means[,2])
     return(c(seg_means[,1],seg_means[,2]))
   })
   #here seperate them into columns(each column have the old+new ones of each pc size)
@@ -185,9 +181,82 @@ run <- function(){
   #gather
   new_sds_gather = gather(as.data.frame(new_sds))
   old_sds_gather = gather(as.data.frame(old_sds))
-  #plot two boxplotos
-  colnames(seg_means) = c("old","new")
-  
   ##then plot a box plot for each PC_SIZE
   box = new_sds_gather %>% ggplot()+geom_boxplot(aes(x = key, y = value))
 }
+
+runNvarThr <- function(){
+  res = lapply(X = 1:length(NVAR_THR), FUN = function(X){
+    opts$pool.hi.nvar = NVAR_THR[X]
+    # pool = modifyPool(pool,opts)
+    seg_means = calcSd(pool,opts)
+    cat(as.character(X),file="/mctp/users/noshadh/data/progress.txt",sep="\n",append=TRUE)
+    # return(c(median(seg_means[,1],na.rm = T),median(seg_means[,2],na.rm = T)))
+    # list(old = seg_means[,1], new = seg_means[,2])
+    return(c(seg_means[,1],seg_means[,2]))
+  })
+  #here seperate them into columns(each column have the old+new ones of each pc size)
+  sds = do.call(cbind,res)
+  #Then seperate them into two different data sets
+  old_sds = sds[1:371,]
+  colnames(old_sds) = paste(NVAR_THR," NVAR")
+  new_sds = sds[372:742,]
+  colnames(new_sds) = str_pad(as.character(NVAR_THR), 3, pad = "0")
+  #gather
+  new_sds_gather = gather(as.data.frame(new_sds))
+  old_sds_gather = gather(as.data.frame(old_sds))
+  ##then plot a box plot for each PC_SIZE
+  box = new_sds_gather %>% ggplot()+geom_boxplot(aes(x = key, y = value))+ggtitle("NVAR THRESHOLD")
+}
+
+
+
+runPatientNum <- function(){
+  opts$pool.hi.nvar = 8
+  res = lapply(X = 1:length(PATIENT_NUM), FUN = function(X){
+    # pool = modifyPool(pool,opts)
+    new_pd = pd
+    patients = sample.int(dim(pd$male$cov)[2], PATIENT_NUM[i])
+    new_pd$male$cov = new_pd$male$cov[,patients]
+    new_pd$female$cov = new_pd$female$cov[,patients]
+    pool = .createPool(new_pd,opts)
+    
+    seg_means = calcSd(pool,opts)
+    cat(as.character(X),file="/mctp/users/noshadh/data/progress.txt",sep="\n",append=TRUE)
+    # return(c(median(seg_means[,1],na.rm = T),median(seg_means[,2],na.rm = T)))
+    # list(old = seg_means[,1], new = seg_means[,2])
+    return(c(seg_means[,1],seg_means[,2]))
+  })
+  system("rm /mctp/users/noshadh/data/progress.txt")
+  #here seperate them into columns(each column have the old+new ones of each pc size)
+  sds = do.call(cbind,res)
+  #Then seperate them into two different data sets
+  old_sds = sds[1:371,]
+  colnames(old_sds) = paste(PATIENT_NUM," comp")
+  new_sds = sds[372:742,]
+  colnames(new_sds) = str_pad(as.character(PATIENT_NUM), 3, pad = "0")
+  #gather
+  new_sds_gather = gather(as.data.frame(new_sds))
+  old_sds_gather = gather(as.data.frame(old_sds))
+  ##then plot a box plot for each PC_SIZE
+  box = new_sds_gather %>% ggplot()+geom_boxplot(aes(x = key, y = value))+theme_linedraw()
+  
+  #analysis
+  a = new_sds_gather %>% mutate(sample_num = rep(seq(from=1,to=371,by = 1,),37))
+  a %>% ggplot(aes(x = key,y = value,color = sample_num))+geom_jitter(size = 0.5)+geom_violin(fill = "transparent", color = "red")+theme_linedraw()
+  samples_sd = split(a,a$sample_num)
+  cor(samples_sd[[1]]$value,samples_sd[[4]]$value)
+  ggplot()+geom_line(aes(y=samples_sd[[1]]$value, x = 1:length(samples_sd[[1]]$value)),color = "red")+
+    geom_line(aes(y=samples_sd[[3]]$value, x = 1:length(samples_sd[[1]]$value)),color = "blue")+
+    geom_line(aes(y=samples_sd[[300]]$value, x = 1:length(samples_sd[[1]]$value)),color = "blue")+
+    geom_line(aes(y=samples_sd[[123]]$value, x = 1:length(samples_sd[[1]]$value)),color = "blue")+
+    geom_line(aes(y=samples_sd[[32]]$value, x = 1:length(samples_sd[[1]]$value)),color = "blue")+
+    geom_line(aes(y=samples_sd[[121]]$value, x = 1:length(samples_sd[[1]]$value)),color = "purple")+
+    geom_line(aes(y=samples_sd[[311]]$value, x = 1:length(samples_sd[[1]]$value)),color = "purple")
+  a %>% filter(sample_num  %in% 1:400) %>% 
+    ggplot()+geom_point(aes(x = (key),y = value, color = as.factor(sample_num)))+theme_linedraw()+theme(legend.position = "none")+
+    geom_line(aes(x = key,y = value, group = sample_num,color= as.factor(sample_num)))
+}
+
+
+
